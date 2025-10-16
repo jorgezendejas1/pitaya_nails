@@ -10,6 +10,17 @@ const Services: React.FC = () => {
     
     const [selectedServices, setSelectedServices] = useState<Service[]>([]);
     const [isBooking, setIsBooking] = useState(false);
+    const [activeCategory, setActiveCategory] = useState('Todos');
+
+    const serviceCategories = useMemo(() => ['Todos', ...Array.from(new Set(SERVICES.map(s => s.category)))], []);
+
+    const filteredServices = useMemo(() => {
+        if (activeCategory === 'Todos') {
+            return SERVICES;
+        }
+        return SERVICES.filter(service => service.category === activeCategory);
+    }, [activeCategory]);
+
 
     useEffect(() => {
         const serviceId = searchParams.get('service');
@@ -68,6 +79,18 @@ const Services: React.FC = () => {
                             <p className="text-lg text-pitaya-dark/70 mt-2">Elige tu tratamiento y reserva tu momento de belleza.</p>
                         </div>
                         
+                        <div className="flex justify-center flex-wrap gap-2 md:gap-4 mb-10">
+                            {serviceCategories.map(category => (
+                                <button
+                                    key={category}
+                                    onClick={() => setActiveCategory(category)}
+                                    className={`px-4 py-2 text-sm md:text-base font-semibold rounded-full transition duration-300 ${activeCategory === category ? 'bg-pitaya-pink text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                >
+                                    {category}
+                                </button>
+                            ))}
+                        </div>
+
                         <div className="bg-pitaya-pink-light border-l-4 border-pitaya-pink text-pitaya-dark p-4 rounded-md mb-8 shadow-sm" role="alert">
                             <div className="flex">
                                 <div className="py-1">
@@ -81,7 +104,7 @@ const Services: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
-                            {SERVICES.map(service => {
+                            {filteredServices.map(service => {
                                 const isSelected = selectedServices.some(s => s.id === service.id);
                                 return (
                                     <div key={service.id} className={`bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 group flex flex-col relative ${isSelected ? 'ring-2 ring-pitaya-pink' : ''}`}>

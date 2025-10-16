@@ -15,6 +15,7 @@ export interface TeamMember {
   role: string;
   specialty: string;
   imageUrl: string;
+  unavailableDays: number[]; // 0 for Sunday, 1 for Monday, etc.
 }
 
 export interface Testimonial {

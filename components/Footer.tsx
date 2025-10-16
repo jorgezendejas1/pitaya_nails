@@ -15,19 +15,19 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="text-lg font-semibold mb-4 uppercase tracking-wider">Navegación</h3>
                         <ul className="space-y-2">
-                            <li><Link to="/servicios" className="hover:text-pitaya-pink transition">Servicios</Link></li>
-                            <li><Link to="/portafolio" className="hover:text-pitaya-pink transition">Portafolio</Link></li>
-                            <li><Link to="/nosotros" className="hover:text-pitaya-pink transition">Nosotros</Link></li>
-                            <li><Link to="/contacto" className="hover:text-pitaya-pink transition">Contacto</Link></li>
+                            <li><Link to="/servicios" className="hover:text-pitaya-pink transition-colors duration-300">Servicios</Link></li>
+                            <li><Link to="/portafolio" className="hover:text-pitaya-pink transition-colors duration-300">Portafolio</Link></li>
+                            <li><Link to="/nosotros" className="hover:text-pitaya-pink transition-colors duration-300">Nosotros</Link></li>
+                            <li><Link to="/contacto" className="hover:text-pitaya-pink transition-colors duration-300">Contacto</Link></li>
                         </ul>
                     </div>
                     <div>
                         <h3 className="text-lg font-semibold mb-4 uppercase tracking-wider">Síguenos</h3>
                         <div className="flex justify-center md:justify-start space-x-4">
-                            <a href={INSTAGRAM_LINK} target="_blank" rel="noopener noreferrer" className="text-pitaya-dark/80 hover:text-pitaya-pink transition">
+                            <a href={INSTAGRAM_LINK} target="_blank" rel="noopener noreferrer" className="text-pitaya-dark/80 hover:text-pitaya-pink transition-colors duration-300" aria-label="Instagram">
                                 <InstagramIcon className="w-6 h-6" />
                             </a>
-                            <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="text-pitaya-dark/80 hover:text-pitaya-pink transition">
+                            <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="text-pitaya-dark/80 hover:text-pitaya-pink transition-colors duration-300" aria-label="WhatsApp">
                                 <WhatsAppIcon className="w-6 h-6" />
                             </a>
                         </div>

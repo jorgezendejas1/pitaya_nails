@@ -15,9 +15,9 @@ export const SERVICES: Service[] = [
 ];
 
 export const TEAM: TeamMember[] = [
-  { id: 1, name: 'Lily', role: 'Dueña / Nail Artist Principal', specialty: 'Especialista en uñas esculturales y diseño 3D.', imageUrl: 'https://picsum.photos/seed/lily/400/400' },
-  { id: 2, name: 'Sofía', role: 'Técnica en Uñas', specialty: 'Experta en manicura perfecta y esmaltado en gel.', imageUrl: 'https://picsum.photos/seed/sofia/400/400' },
-  { id: 3, name: 'Valeria', role: 'Técnica en Uñas y Pedicurista', specialty: 'Maestra de la pedicura spa y diseños creativos.', imageUrl: 'https://picsum.photos/seed/valeria/400/400' }
+  { id: 1, name: 'Lily', role: 'Dueña / Nail Artist Principal', specialty: 'Especialista en uñas esculturales y diseño 3D.', imageUrl: 'https://picsum.photos/seed/lily/400/400', unavailableDays: [0] }, // Unavailable on Sunday
+  { id: 2, name: 'Sofía', role: 'Técnica en Uñas', specialty: 'Experta en manicura perfecta y esmaltado en gel.', imageUrl: 'https://picsum.photos/seed/sofia/400/400', unavailableDays: [0, 3] }, // Unavailable on Sunday, Wednesday
+  { id: 3, name: 'Valeria', role: 'Técnica en Uñas y Pedicurista', specialty: 'Maestra de la pedicura spa y diseños creativos.', imageUrl: 'https://picsum.photos/seed/valeria/400/400', unavailableDays: [0, 1] } // Unavailable on Sunday, Monday
 ];
 
 export const TESTIMONIALS: Testimonial[] = [

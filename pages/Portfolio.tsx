@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PORTFOLIO_IMAGES, PORTFOLIO_CATEGORIES } from '../constants';
 import type { PortfolioImage } from '../types';
 
@@ -100,9 +101,28 @@ const ImageLightbox: React.FC<{
 
 const Portfolio: React.FC = () => {
     type ViewMode = 'masonry' | 'gallery';
+    const [searchParams, setSearchParams] = useSearchParams();
     const [viewMode, setViewMode] = useState<ViewMode>('masonry');
-    const [activeFilter, setActiveFilter] = useState('Todos');
+    const [activeFilter, setActiveFilter] = useState(searchParams.get('category') || 'Todos');
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+
+    useEffect(() => {
+        const categoryFromUrl = searchParams.get('category');
+        if (categoryFromUrl && PORTFOLIO_CATEGORIES.includes(categoryFromUrl)) {
+            setActiveFilter(categoryFromUrl);
+        } else {
+            setActiveFilter('Todos');
+        }
+    }, [searchParams]);
+
+    const handleFilterChange = (category: string) => {
+        setActiveFilter(category);
+        if (category === 'Todos') {
+            setSearchParams({});
+        } else {
+            setSearchParams({ category });
+        }
+    };
 
     const filteredImages = useMemo(() => {
         if (activeFilter === 'Todos') {
@@ -149,7 +169,7 @@ const Portfolio: React.FC = () => {
                     {PORTFOLIO_CATEGORIES.map(category => (
                         <button
                             key={category}
-                            onClick={() => setActiveFilter(category)}
+                            onClick={() => handleFilterChange(category)}
                             className={`px-4 py-2 text-sm md:text-base font-semibold rounded-full transition duration-300 ${activeFilter === category ? 'bg-pitaya-pink text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                         >
                             {category}

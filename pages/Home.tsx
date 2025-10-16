@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { SERVICES, TESTIMONIALS } from '../constants';
 import ServiceCard from '../components/ServiceCard';
+import CallToActionBanner from '../components/CallToActionBanner';
 
 const Home: React.FC = () => {
   const featuredServices = SERVICES.slice(0, 3);
@@ -37,6 +38,17 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Call to Action Banner */}
+       <section className="container mx-auto px-4 sm:px-6 lg:px-8 -mt-40 md:-mt-48 relative z-20">
+            <CallToActionBanner 
+                title="¿Lista para consentirte?"
+                subtitle="Tus manos merecen lo mejor. Agenda tu cita hoy y déjanos transformar tus uñas en una obra de arte."
+                buttonText="Ver Servicios y Agendar"
+                buttonLink="/servicios"
+            />
+       </section>
+
 
       {/* Featured Services Section */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8">
