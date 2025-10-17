@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PORTFOLIO_IMAGES, PORTFOLIO_CATEGORIES } from '../constants';
@@ -46,8 +45,7 @@ const ImageLightbox: React.FC<{
 
     return (
         <div 
-            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-            style={{ animation: 'fadeIn 0.3s ease' }}
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 fade-in"
             onClick={onClose}
             role="dialog"
             aria-modal="true"
@@ -160,12 +158,12 @@ const Portfolio: React.FC = () => {
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-            <div className="text-center mb-12 reveal-on-scroll">
+            <div className="text-center mb-12">
                 <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark">Nuestro Trabajo</h1>
                 <p className="text-lg text-pitaya-dark/70 mt-2">Inspírate con algunos de nuestros diseños favoritos.</p>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-12 gap-4 reveal-on-scroll" style={{ transitionDelay: '100ms' }}>
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-12 gap-4">
                 {/* Category Filters */}
                 <div className="flex justify-center flex-wrap gap-2 md:gap-4">
                     {PORTFOLIO_CATEGORIES.map(category => (
@@ -196,8 +194,7 @@ const Portfolio: React.FC = () => {
                 {filteredImages.map((image, index) => (
                     <div 
                         key={image.id} 
-                        className={`${viewMode === 'masonry' ? 'masonry-item' : 'aspect-square'} reveal-on-scroll`}
-                        style={{ transitionDelay: `${(index % 12) * 40}ms` }}
+                        className={viewMode === 'masonry' ? 'masonry-item' : 'aspect-square'} 
                         onClick={() => openLightbox(index)}
                     >
                         <img 

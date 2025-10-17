@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { SERVICES } from '../constants';
@@ -75,12 +74,12 @@ const Services: React.FC = () => {
                     <BookingFlow services={selectedServices} onBack={handleBackToList} />
                 ) : (
                     <>
-                        <div className="text-center mb-12 reveal-on-scroll">
+                        <div className="text-center mb-12">
                             <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark">Nuestros Servicios</h1>
                             <p className="text-lg text-pitaya-dark/70 mt-2">Elige tu tratamiento y reserva tu momento de belleza.</p>
                         </div>
                         
-                        <div className="flex justify-center flex-wrap gap-2 md:gap-4 mb-10 reveal-on-scroll" style={{ transitionDelay: '100ms' }}>
+                        <div className="flex justify-center flex-wrap gap-2 md:gap-4 mb-10">
                             {serviceCategories.map(category => (
                                 <button
                                     key={category}
@@ -92,7 +91,7 @@ const Services: React.FC = () => {
                             ))}
                         </div>
 
-                        <div className="bg-pitaya-pink-light border-l-4 border-pitaya-pink text-pitaya-dark p-4 rounded-md mb-8 shadow-sm reveal-on-scroll" role="alert" style={{ transitionDelay: '200ms' }}>
+                        <div className="bg-pitaya-pink-light border-l-4 border-pitaya-pink text-pitaya-dark p-4 rounded-md mb-8 shadow-sm" role="alert">
                             <div className="flex">
                                 <div className="py-1">
                                     <svg className="fill-current h-6 w-6 text-pitaya-pink mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zM9 5v6h2V5H9zm0 8v2h2v-2H9z"/></svg>
@@ -105,10 +104,10 @@ const Services: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
-                            {filteredServices.map((service, index) => {
+                            {filteredServices.map(service => {
                                 const isSelected = selectedServices.some(s => s.id === service.id);
                                 return (
-                                    <div key={service.id} className={`bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 group flex flex-col relative reveal-on-scroll ${isSelected ? 'ring-2 ring-pitaya-pink' : ''}`} style={{ transitionDelay: `${index * 50}ms`}}>
+                                    <div key={service.id} className={`bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 group flex flex-col relative ${isSelected ? 'ring-2 ring-pitaya-pink' : ''}`}>
                                         {isSelected && (
                                              <div className="absolute top-3 right-3 bg-pitaya-pink text-white rounded-full h-6 w-6 flex items-center justify-center z-10" aria-label="Seleccionado">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>

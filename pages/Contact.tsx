@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { WHATSAPP_LINK, INSTAGRAM_LINK, FORMSPREE_ENDPOINT, InstagramIcon, WhatsAppIcon } from '../constants';
+import InteractiveMap from '../components/InteractiveMap';
 
 const Contact: React.FC = () => {
     const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -34,12 +34,12 @@ const Contact: React.FC = () => {
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-            <div className="text-center mb-12 reveal-on-scroll">
+            <div className="text-center mb-12">
                 <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark">Contáctanos</h1>
                 <p className="text-lg text-pitaya-dark/70 mt-2">¿Tienes alguna pregunta? Estamos aquí para ayudarte.</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-                <div className="bg-white p-8 rounded-lg shadow-lg reveal-on-scroll">
+                <div className="bg-white p-8 rounded-lg shadow-lg">
                     <h2 className="text-2xl font-bold mb-6 text-pitaya-dark">Envíanos un mensaje</h2>
                     
                     {submissionStatus === 'success' ? (
@@ -83,7 +83,7 @@ const Contact: React.FC = () => {
                         </>
                     )}
                 </div>
-                <div className="space-y-8 reveal-on-scroll" style={{ transitionDelay: '150ms' }}>
+                <div className="space-y-8">
                      <div>
                         <h2 className="text-2xl font-bold mb-4 text-pitaya-dark">Información Directa</h2>
                         <div className="space-y-4">
@@ -99,16 +99,8 @@ const Contact: React.FC = () => {
                     </div>
                     <div>
                         <h2 className="text-2xl font-bold mb-4 text-pitaya-dark">Nuestra Ubicación</h2>
-                        <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden shadow-lg">
-                           <iframe
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d238132.6713879288!2d-86.99120614392436!3d21.1213322199049!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8f4c2b05a5853325%3A0x8603387d544b6797!2sCanc%C3%BAn%2C%20Q.R.%2C%20Mexico!5e0!3m2!1sen!2sus!4v1684351212345!5m2!1sen!2sus"
-                                width="100%"
-                                height="100%"
-                                style={{ border: 0 }}
-                                allowFullScreen={true}
-                                loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
-                            ></iframe>
+                        <div className="h-96 rounded-lg overflow-hidden shadow-lg">
+                           <InteractiveMap lat={21.1619} lng={-86.8515} zoom={13} />
                         </div>
                     </div>
                 </div>
