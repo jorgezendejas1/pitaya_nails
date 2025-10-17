@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { WHATSAPP_LINK, INSTAGRAM_LINK, FORMSPREE_ENDPOINT, InstagramIcon, WhatsAppIcon } from '../constants';
 
@@ -33,12 +34,12 @@ const Contact: React.FC = () => {
 
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-            <div className="text-center mb-12">
+            <div className="text-center mb-12 reveal-on-scroll">
                 <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark">Contáctanos</h1>
                 <p className="text-lg text-pitaya-dark/70 mt-2">¿Tienes alguna pregunta? Estamos aquí para ayudarte.</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-                <div className="bg-white p-8 rounded-lg shadow-lg">
+                <div className="bg-white p-8 rounded-lg shadow-lg reveal-on-scroll">
                     <h2 className="text-2xl font-bold mb-6 text-pitaya-dark">Envíanos un mensaje</h2>
                     
                     {submissionStatus === 'success' ? (
@@ -82,7 +83,7 @@ const Contact: React.FC = () => {
                         </>
                     )}
                 </div>
-                <div className="space-y-8">
+                <div className="space-y-8 reveal-on-scroll" style={{ transitionDelay: '150ms' }}>
                      <div>
                         <h2 className="text-2xl font-bold mb-4 text-pitaya-dark">Información Directa</h2>
                         <div className="space-y-4">

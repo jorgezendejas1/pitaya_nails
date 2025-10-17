@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -6,10 +7,10 @@ const About: React.FC = () => {
         <div className="bg-pitaya-beige">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                    <div>
+                    <div className="reveal-on-scroll">
                         <img src="https://picsum.photos/seed/salon-interior/800/600" alt="Interior de Pitaya Nails" className="rounded-lg shadow-2xl" />
                     </div>
-                    <div className="text-center lg:text-left">
+                    <div className="text-center lg:text-left reveal-on-scroll" style={{ transitionDelay: '150ms' }}>
                         <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark">Nuestra Historia</h1>
                         <p className="text-pitaya-gold text-xl font-semibold mt-2 mb-6">Pasión por la perfección</p>
                         <div className="space-y-4 text-lg text-pitaya-dark/80">

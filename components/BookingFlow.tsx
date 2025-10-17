@@ -30,6 +30,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
     const [clientDetails, setClientDetails] = useState({ name: '', email: '', phone: '' });
+    const [reminders, setReminders] = useState({ email: true, sms: false });
     const [viewDate, setViewDate] = useState(new Date());
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -104,6 +105,10 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
     const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setClientDetails(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
+    
+    const handleRemindersChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setReminders(prev => ({ ...prev, [e.target.name]: e.target.checked }));
+    };
 
     const handleDetailsSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -121,6 +126,34 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
             };
             
             sendConfirmationEmail();
+
+            const scheduleReminders = () => {
+                if (!selectedDate || !selectedTime) return;
+                
+                const appointmentDateTime = new Date(selectedDate);
+                const [hours, minutes] = selectedTime.split(':').map(Number);
+                appointmentDateTime.setHours(hours, minutes, 0, 0);
+        
+                const reminderDateTime = new Date(appointmentDateTime.getTime() - (24 * 60 * 60 * 1000));
+        
+                if (reminders.email) {
+                    console.log(`--- SIMULATING SCHEDULING EMAIL REMINDER ---`, {
+                        to: clientDetails.email,
+                        at: reminderDateTime.toISOString(),
+                        message: `Hola ${clientDetails.name}, te recordamos tu cita en Pitaya Nails mañana a las ${selectedTime}.`
+                    });
+                }
+                if (reminders.sms) {
+                    console.log(`--- SIMULATING SCHEDULING SMS REMINDER ---`, {
+                        to: clientDetails.phone,
+                        at: reminderDateTime.toISOString(),
+                        message: `Hola ${clientDetails.name}, te recordamos tu cita en Pitaya Nails mañana a las ${selectedTime}.`
+                    });
+                }
+            };
+
+            scheduleReminders();
+
             setIsProcessing(false);
             handleNextStep();
         }, 2500);
@@ -274,7 +307,34 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                       <label htmlFor="phone" className="block text-sm font-semibold text-gray-700">Teléfono</label>
                       <input type="tel" id="phone" name="phone" value={clientDetails.phone} onChange={handleDetailsChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink" required />
                     </div>
-                    <button type="submit" className="w-full bg-pitaya-pink text-white font-semibold py-3 px-4 rounded-full hover:bg-opacity-90 transition transform hover:scale-105">
+                    <div className="pt-2">
+                        <p className="block text-sm font-semibold text-gray-700">Recordatorios de Cita</p>
+                        <div className="mt-2 space-y-2">
+                            <label htmlFor="emailReminder" className="flex items-center cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    id="emailReminder" 
+                                    name="email" 
+                                    checked={reminders.email} 
+                                    onChange={handleRemindersChange} 
+                                    className="h-4 w-4 rounded border-gray-300 text-pitaya-pink focus:ring-pitaya-pink" 
+                                />
+                                <span className="ml-2 text-sm text-gray-600">Enviarme un recordatorio por correo 24h antes</span>
+                            </label>
+                            <label htmlFor="smsReminder" className="flex items-center cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    id="smsReminder" 
+                                    name="sms" 
+                                    checked={reminders.sms} 
+                                    onChange={handleRemindersChange} 
+                                    className="h-4 w-4 rounded border-gray-300 text-pitaya-pink focus:ring-pitaya-pink" 
+                                />
+                                <span className="ml-2 text-sm text-gray-600">Enviarme un recordatorio por SMS 24h antes</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" className="w-full bg-pitaya-pink text-white font-semibold py-3 px-4 rounded-full hover:bg-opacity-90 transition transform hover:scale-105 !mt-6">
                       Revisar Cita
                     </button>
                   </form>
@@ -319,6 +379,12 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                       <p className="mt-1 text-gray-600">{clientDetails.name}</p>
                       <p className="text-gray-600">{clientDetails.email}</p>
                       <p className="text-gray-600">{clientDetails.phone}</p>
+                      <p className="mt-2 text-sm text-gray-500">
+                        {reminders.email || reminders.sms 
+                            ? `Recordatorios activados para: ${[reminders.email && 'Email', reminders.sms && 'SMS'].filter(Boolean).join(' y ')}.`
+                            : 'No se enviarán recordatorios.'
+                        }
+                      </p>
                     </div>
                     <div className="border-t border-gray-200"></div>
                     <div className="text-right">
