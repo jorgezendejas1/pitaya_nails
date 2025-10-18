@@ -103,39 +103,57 @@ const Portfolio: React.FC = () => {
     type ViewMode = 'masonry' | 'gallery';
     const [searchParams, setSearchParams] = useSearchParams();
     const [viewMode, setViewMode] = useState<ViewMode>('masonry');
-    const [activeFilter, setActiveFilter] = useState(searchParams.get('category') || 'Todos');
+    const [activeFilters, setActiveFilters] = useState<string[]>([]);
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
     useEffect(() => {
-        const categoryFromUrl = searchParams.get('category');
-        if (categoryFromUrl && PORTFOLIO_CATEGORIES.includes(categoryFromUrl)) {
-            setActiveFilter(categoryFromUrl);
+        const categoriesFromUrl = searchParams.get('category')?.split(',').filter(Boolean) || [];
+        if (categoriesFromUrl.length > 0) {
+            setActiveFilters(categoriesFromUrl.filter(cat => PORTFOLIO_CATEGORIES.includes(cat)));
         } else {
-            setActiveFilter('Todos');
+            setActiveFilters(['Todos']);
         }
     }, [searchParams]);
 
     const handleFilterChange = (category: string) => {
-        setActiveFilter(category);
-        if (category === 'Todos') {
-            setSearchParams({});
-        } else {
-            setSearchParams({ category });
-        }
+        setActiveFilters(prev => {
+            if (category === 'Todos') {
+                return ['Todos'];
+            }
+            const newFilters = prev.filter(f => f !== 'Todos');
+            if (newFilters.includes(category)) {
+                const updatedFilters = newFilters.filter(f => f !== category);
+                return updatedFilters.length === 0 ? ['Todos'] : updatedFilters;
+            } else {
+                return [...newFilters, category];
+            }
+        });
     };
-
-    const filteredImages = useMemo(() => {
-        if (activeFilter === 'Todos') {
-            return PORTFOLIO_IMAGES;
-        }
-        return PORTFOLIO_IMAGES.filter(image => image.category === activeFilter);
-    }, [activeFilter]);
     
     useEffect(() => {
-        // When filter changes, close lightbox to avoid index out of bounds
-        setSelectedImageIndex(null);
-    }, [activeFilter]);
+        const currentParams = new URLSearchParams(searchParams);
+        const currentCategory = currentParams.get('category') || '';
+        const newCategory = activeFilters.includes('Todos') ? '' : activeFilters.join(',');
 
+        if(currentCategory !== newCategory) {
+            if (newCategory) {
+                setSearchParams({ category: newCategory });
+            } else {
+                setSearchParams({});
+            }
+        }
+         // When filter changes, close lightbox to avoid index out of bounds
+        setSelectedImageIndex(null);
+    }, [activeFilters, setSearchParams, searchParams]);
+
+
+    const filteredImages = useMemo(() => {
+        if (activeFilters.includes('Todos')) {
+            return PORTFOLIO_IMAGES;
+        }
+        return PORTFOLIO_IMAGES.filter(image => activeFilters.some(filter => image.category === filter));
+    }, [activeFilters]);
+    
     const openLightbox = (index: number) => {
         setSelectedImageIndex(index);
     };
@@ -170,7 +188,7 @@ const Portfolio: React.FC = () => {
                         <button
                             key={category}
                             onClick={() => handleFilterChange(category)}
-                            className={`px-4 py-2 text-sm md:text-base font-semibold rounded-full transition duration-300 ${activeFilter === category ? 'bg-pitaya-pink text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                            className={`px-4 py-2 text-sm md:text-base font-semibold rounded-full transition duration-300 ${activeFilters.includes(category) ? 'bg-pitaya-pink text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                         >
                             {category}
                         </button>

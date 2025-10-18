@@ -11,18 +11,21 @@ const Home: React.FC = () => {
     <div className="space-y-20 md:space-y-28 pb-16">
       {/* Hero Section */}
       <section
-        className="relative h-[70vh] md:h-[90vh] bg-cover bg-center flex items-center justify-center text-white"
-        style={{ backgroundImage: "url('https://picsum.photos/seed/nail-salon-4k/1920/1080')" }}
+        className="relative h-[70vh] md:h-[90vh] flex items-center justify-center text-white overflow-hidden"
       >
+        <div 
+            className="absolute inset-0 bg-cover bg-center hero-image-reveal"
+            style={{ backgroundImage: "url('https://picsum.photos/seed/nail-salon-4k/1920/1080')" }}
+        ></div>
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="relative z-10 text-center p-4">
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-4 fade-in" style={{ animationDelay: '0.2s' }}>
+          <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-4 fade-in-up" style={{ animationDelay: '0.8s' }}>
             Arte en uñas con el toque de Pitaya Nails — Cancún
           </h1>
-          <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 fade-in" style={{ animationDelay: '0.4s' }}>
+          <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8 fade-in-up" style={{ animationDelay: '1.0s' }}>
             Manicure, pedicure y nail art con atención personalizada por Lily y su equipo.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center fade-in" style={{ animationDelay: '0.6s' }}>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center fade-in-up" style={{ animationDelay: '1.2s' }}>
             <Link
               to="/servicios"
               className="bg-pitaya-pink text-white font-semibold px-8 py-3 rounded-full hover:bg-opacity-90 transition duration-300 transform hover:scale-105 shadow-lg"

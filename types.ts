@@ -1,4 +1,3 @@
-
 export interface Service {
   id: string;
   name: string;
@@ -7,6 +6,10 @@ export interface Service {
   price: number; // in MXN
   category: string;
   imageUrl: string;
+  isCustomizable?: boolean;
+  customizationPrompt?: string;
+  pricePerUnit?: boolean;
+  durationPerUnit?: boolean;
 }
 
 export interface TeamMember {

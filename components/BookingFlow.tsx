@@ -7,7 +7,7 @@ interface BookingFlowProps {
     onBack: () => void;
 }
 
-const steps = ["Profesional", "Fecha y Hora", "Tus Datos", "Revisar", "Pago", "Confirmado"];
+const steps = ["Preferencias", "Profesional", "Fecha y Hora", "Tus Datos", "Revisar", "Pago", "Confirmado"];
 
 // --- Constants and helpers for availability ---
 const SALON_OPENS_MIN = 10 * 60; // 10:00 AM in minutes from midnight
@@ -33,51 +33,48 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
     const [reminders, setReminders] = useState({ email: true, sms: false });
     const [viewDate, setViewDate] = useState(new Date());
     const [isProcessing, setIsProcessing] = useState(false);
+    
+    const customizableServices = useMemo(() => services.filter(s => s.isCustomizable), [services]);
+    const [customizations, setCustomizations] = useState<Record<string, { quantity: number; notes: string }>>(() => 
+        Object.fromEntries(customizableServices.map(s => [s.id, { quantity: 1, notes: '' }]))
+    );
+    const [inspirationPhotos, setInspirationPhotos] = useState<File[]>([]);
 
-    // FIX: Updated accumulator properties to `totalPrice` and `totalDuration` to match destructuring.
+
     const { totalPrice, totalDuration } = useMemo(() => {
-        return services.reduce(
-            (acc, service) => {
+        return services.reduce((acc, service) => {
+            if (service.isCustomizable && customizations[service.id]) {
+                const quantity = customizations[service.id].quantity || 1;
+                acc.totalPrice += service.pricePerUnit ? service.price * quantity : service.price;
+                acc.totalDuration += service.durationPerUnit ? service.duration * quantity : service.duration;
+            } else {
                 acc.totalPrice += service.price;
                 acc.totalDuration += service.duration;
-                return acc;
-            },
-            { totalPrice: 0, totalDuration: 0 }
-        );
-    }, [services]);
+            }
+            return acc;
+        }, { totalPrice: 0, totalDuration: 0 });
+    }, [services, customizations]);
 
     const availableTimes = useMemo(() => {
         if (!selectedDate || !selectedProfessional) return [];
-
-        // The only fixed unavailable time is the lunch break.
-        const bookedSlots = [
-            { start: LUNCH_BREAK_START_MIN, end: LUNCH_BREAK_END_MIN }
-        ];
-
+        const bookedSlots = [{ start: LUNCH_BREAK_START_MIN, end: LUNCH_BREAK_END_MIN }];
         const availableSlots: string[] = [];
-        // Iterate through potential start times based on the defined interval
         for (let time = SALON_OPENS_MIN; time <= SALON_CLOSES_MIN - totalDuration; time += SLOT_INTERVAL) {
             const slotStart = time;
             const slotEnd = time + totalDuration;
-            
             let isAvailable = true;
-
-            // Check for overlap with the lunch break
             for (const booked of bookedSlots) {
                 if (Math.max(slotStart, booked.start) < Math.min(slotEnd, booked.end)) {
                     isAvailable = false;
                     break;
                 }
             }
-            
             if (isAvailable) {
                 availableSlots.push(formatTime(slotStart));
             }
         }
-        
         return availableSlots;
     }, [selectedDate, selectedProfessional, totalDuration]);
-
 
     const handleNextStep = () => setCurrentStep(prev => prev + 1);
     const goToStep = (step: number) => setCurrentStep(step);
@@ -114,46 +111,92 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
         e.preventDefault();
         handleNextStep();
     };
+    
+    const handleCustomizationChange = (serviceId: string, field: 'quantity' | 'notes', value: string | number) => {
+        setCustomizations(prev => ({
+            ...prev,
+            [serviceId]: { ...prev[serviceId], [field]: value }
+        }));
+    };
+
+    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setInspirationPhotos(Array.from(e.target.files));
+        }
+    };
+    
+    const generateIcsFile = () => {
+        if (!selectedDate || !selectedTime || !selectedProfessional) return;
+
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        const startDate = new Date(selectedDate);
+        startDate.setHours(hours, minutes, 0, 0);
+        
+        const endDate = new Date(startDate.getTime() + totalDuration * 60000);
+
+        const toVCalendarDate = (date: Date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+        const icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//PitayaNails//Appointment//ES',
+            'BEGIN:VEVENT',
+            `UID:${Date.now()}@pitayanails.com`,
+            `DTSTAMP:${toVCalendarDate(new Date())}`,
+            `DTSTART:${toVCalendarDate(startDate)}`,
+            `DTEND:${toVCalendarDate(endDate)}`,
+            'SUMMARY:Cita en Pitaya Nails',
+            `DESCRIPTION:Tu cita para: ${services.map(s => s.name).join(', ')}. Con ${selectedProfessional.name}.`,
+            'LOCATION:Pitaya Nails, Cancún, México',
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\r\n');
+
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'cita-pitaya-nails.ics';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const scheduleClientReminder = () => {
+        if (!reminders.email && !reminders.sms) {
+            console.log("User did not opt-in for reminders.");
+            return;
+        }
+
+        if (!selectedDate || !selectedTime || !selectedProfessional) {
+            console.error("Cannot schedule reminder: Missing appointment details.");
+            return;
+        }
+
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        const appointmentDate = new Date(selectedDate);
+        appointmentDate.setHours(hours, minutes, 0, 0);
+
+        const reminderTime = appointmentDate.getTime() - 24 * 60 * 60 * 1000;
+        const currentTime = Date.now();
+        const delay = reminderTime - currentTime;
+
+        if (delay > 0) {
+            setTimeout(() => {
+                alert(
+                    `Recordatorio de Cita:\n\n¡No lo olvides! Tienes una cita en Pitaya Nails mañana a las ${selectedTime} con ${selectedProfessional.name}.\n\nServicios: ${services.map(s => s.name).join(', ')}.`
+                );
+            }, delay);
+            console.log(`Reminder scheduled for ${new Date(reminderTime).toLocaleString('es-MX')}`);
+        } else {
+            console.log("Reminder time is in the past, not scheduling.");
+        }
+    };
+
 
     const handlePayment = () => {
         setIsProcessing(true);
         setTimeout(() => {
-            const sendConfirmationEmail = () => {
-                 const serviceList = services.map(s => `- ${s.name} ($${s.price} MXN)`).join('\n');
-                 const subject = `Confirmación de tu cita en Pitaya Nails`;
-                 const body = `Hola ${clientDetails.name},\n\n¡Tu cita en Pitaya Nails está confirmada!\n\nAquí están los detalles:\nServicios:\n${serviceList}\n\nProfesional: ${selectedProfessional?.name}\nFecha: ${selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}\nHora: ${selectedTime}\n\nTotal Pagado: $${totalPrice} MXN\n\nHemos enviado los detalles completos a tu correo electrónico: ${clientDetails.email}.\n\n¡Te esperamos!\n\nSaludos,\nEl equipo de Pitaya Nails`;
-                console.log("--- SIMULATING SENDING EMAIL ---", { to: clientDetails.email, subject, body });
-            };
-            
-            sendConfirmationEmail();
-
-            const scheduleReminders = () => {
-                if (!selectedDate || !selectedTime) return;
-                
-                const appointmentDateTime = new Date(selectedDate);
-                const [hours, minutes] = selectedTime.split(':').map(Number);
-                appointmentDateTime.setHours(hours, minutes, 0, 0);
-        
-                const reminderDateTime = new Date(appointmentDateTime.getTime() - (24 * 60 * 60 * 1000));
-        
-                if (reminders.email) {
-                    console.log(`--- SIMULATING SCHEDULING EMAIL REMINDER ---`, {
-                        to: clientDetails.email,
-                        at: reminderDateTime.toISOString(),
-                        message: `Hola ${clientDetails.name}, te recordamos tu cita en Pitaya Nails mañana a las ${selectedTime}.`
-                    });
-                }
-                if (reminders.sms) {
-                    console.log(`--- SIMULATING SCHEDULING SMS REMINDER ---`, {
-                        to: clientDetails.phone,
-                        at: reminderDateTime.toISOString(),
-                        message: `Hola ${clientDetails.name}, te recordamos tu cita en Pitaya Nails mañana a las ${selectedTime}.`
-                    });
-                }
-            };
-
-            scheduleReminders();
-
+            scheduleClientReminder();
             setIsProcessing(false);
             handleNextStep();
         }, 2500);
@@ -164,28 +207,20 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
         const monthNameStr = d.toLocaleString('es-MX', { month: 'long' });
         const firstDayOfMonth = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
         const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-        
-        const days = Array.from({ length: firstDayOfMonth }, () => null);
-        for (let i = 1; i <= daysInMonth; i++) {
-            days.push(new Date(d.getFullYear(), d.getMonth(), i));
-        }
-
+        const days: (Date | null)[] = Array.from({ length: firstDayOfMonth }, () => null);
+        for (let i = 1; i <= daysInMonth; i++) days.push(new Date(d.getFullYear(), d.getMonth(), i));
         const weeks = [];
-        for (let i = 0; i < days.length; i += 7) {
-            weeks.push(days.slice(i, i + 7));
+        for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+        if (weeks.length > 0) {
+          while(weeks[weeks.length-1].length < 7) weeks[weeks.length-1].push(null);
         }
-        while(weeks[weeks.length-1].length < 7) {
-            weeks[weeks.length-1].push(null);
-        }
-        
         return { calendarWeeks: weeks, monthName: monthNameStr, year: d.getFullYear() };
     }, [viewDate]);
-
 
     const changeMonth = (offset: number) => {
       setViewDate(prevDate => {
           const newDate = new Date(prevDate);
-          newDate.setDate(1); // Avoid month skipping issues
+          newDate.setDate(1);
           newDate.setMonth(newDate.getMonth() + offset);
           return newDate;
       });
@@ -194,14 +229,67 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
     const isDateUnavailable = (date: Date) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        if (date < today) return true;
-        if (selectedProfessional?.unavailableDays.includes(date.getDay())) return true;
-        return false;
+        return date < today || (selectedProfessional?.unavailableDays.includes(date.getDay()) ?? false);
     }
 
     const renderStepContent = () => {
         switch (currentStep) {
-            case 0: // Select Professional
+            case 0: // Preferences
+                return (
+                    <div className="fade-in max-w-lg mx-auto w-full">
+                        <h3 className="text-2xl font-semibold mb-6 text-center">Preferencias y Detalles</h3>
+                        <div className="space-y-8">
+                            {customizableServices.map(service => (
+                                <div key={service.id} className="p-4 border rounded-lg">
+                                    <h4 className="font-bold text-lg text-pitaya-dark">{service.name}</h4>
+                                    <div className="mt-4 space-y-4">
+                                        <div>
+                                            <label htmlFor={`quantity-${service.id}`} className="block text-sm font-semibold text-gray-700">{service.customizationPrompt}</label>
+                                            <input 
+                                                type="number" 
+                                                id={`quantity-${service.id}`}
+                                                value={customizations[service.id]?.quantity || 1}
+                                                onChange={e => handleCustomizationChange(service.id, 'quantity', parseInt(e.target.value, 10))}
+                                                min="1"
+                                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor={`notes-${service.id}`} className="block text-sm font-semibold text-gray-700">Colores o ideas preferidas (opcional)</label>
+                                            <textarea 
+                                                id={`notes-${service.id}`}
+                                                rows={3}
+                                                value={customizations[service.id]?.notes || ''}
+                                                onChange={e => handleCustomizationChange(service.id, 'notes', e.target.value)}
+                                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink"
+                                                placeholder="Ej: Tonos pastel, diseño de flores, etc."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                             <div>
+                                <h4 className="text-lg font-semibold text-gray-800 mb-2">Inspiración</h4>
+                                <label htmlFor="inspiration-upload" className="block text-sm font-semibold text-gray-700">Sube fotos de diseños que te gusten (opcional)</label>
+                                <input 
+                                    type="file" 
+                                    id="inspiration-upload" 
+                                    multiple 
+                                    accept="image/*" 
+                                    onChange={handlePhotoUpload}
+                                    className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pitaya-pink-light file:text-pitaya-pink hover:file:bg-pitaya-pink/20"
+                                />
+                                {inspirationPhotos.length > 0 && (
+                                    <p className="text-xs text-gray-500 mt-2">{inspirationPhotos.length} foto(s) seleccionada(s).</p>
+                                )}
+                            </div>
+                        </div>
+                        <button onClick={handleNextStep} className="mt-8 w-full bg-pitaya-pink text-white font-semibold py-3 px-4 rounded-full hover:bg-opacity-90 transition transform hover:scale-105">
+                            Siguiente
+                        </button>
+                    </div>
+                );
+            case 1: // Select Professional
                 return (
                     <div className="fade-in">
                         <h3 className="text-2xl font-semibold mb-6 text-center">Elige una profesional</h3>
@@ -216,11 +304,10 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                         </div>
                     </div>
                 );
-            case 1: // Select Date and Time
+            case 2: // Select Date and Time
                 return (
                      <div className="fade-in">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
-                            {/* Calendar */}
                             <div className="w-full">
                                 <h3 className="text-xl font-semibold mb-4 text-center">1. Elige una fecha</h3>
                                 <div className="max-w-xs mx-auto bg-white p-4 rounded-lg border">
@@ -258,7 +345,6 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                                     </div>
                                 </div>
                             </div>
-                            {/* Time Slots */}
                             <div className="w-full">
                                 <h3 className="text-xl font-semibold mb-4 text-center">2. Elige un horario</h3>
                                 {selectedDate ? (
@@ -290,7 +376,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                         </div>
                     </div>
                 );
-            case 2: // Your Details
+            case 3: // Your Details
               return (
                 <div className="fade-in max-w-md mx-auto">
                   <h3 className="text-2xl font-semibold mb-6 text-center">Completa tus datos</h3>
@@ -311,25 +397,11 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                         <p className="block text-sm font-semibold text-gray-700">Recordatorios de Cita</p>
                         <div className="mt-2 space-y-2">
                             <label htmlFor="emailReminder" className="flex items-center cursor-pointer">
-                                <input 
-                                    type="checkbox" 
-                                    id="emailReminder" 
-                                    name="email" 
-                                    checked={reminders.email} 
-                                    onChange={handleRemindersChange} 
-                                    className="h-4 w-4 rounded border-gray-300 text-pitaya-pink focus:ring-pitaya-pink" 
-                                />
+                                <input type="checkbox" id="emailReminder" name="email" checked={reminders.email} onChange={handleRemindersChange} className="h-4 w-4 rounded border-gray-300 text-pitaya-pink focus:ring-pitaya-pink" />
                                 <span className="ml-2 text-sm text-gray-600">Enviarme un recordatorio por correo 24h antes</span>
                             </label>
                             <label htmlFor="smsReminder" className="flex items-center cursor-pointer">
-                                <input 
-                                    type="checkbox" 
-                                    id="smsReminder" 
-                                    name="sms" 
-                                    checked={reminders.sms} 
-                                    onChange={handleRemindersChange} 
-                                    className="h-4 w-4 rounded border-gray-300 text-pitaya-pink focus:ring-pitaya-pink" 
-                                />
+                                <input type="checkbox" id="smsReminder" name="sms" checked={reminders.sms} onChange={handleRemindersChange} className="h-4 w-4 rounded border-gray-300 text-pitaya-pink focus:ring-pitaya-pink" />
                                 <span className="ml-2 text-sm text-gray-600">Enviarme un recordatorio por SMS 24h antes</span>
                             </label>
                         </div>
@@ -340,7 +412,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                   </form>
                 </div>
               );
-            case 3: // Review Details
+            case 4: // Review Details
               return (
                 <div className="fade-in max-w-lg mx-auto">
                   <h3 className="text-2xl font-semibold mb-6 text-center">Revisa tu cita</h3>
@@ -351,14 +423,26 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                         <button onClick={onBack} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       <ul className="list-disc list-inside mt-2 text-sm text-gray-600">
-                        {services.map(s => <li key={s.id}>{s.name} (${s.price} MXN)</li>)}
+                        {services.map(s => <li key={s.id}>{s.name} {customizations[s.id] ? `(x${customizations[s.id].quantity})` : ''} - ${s.pricePerUnit ? s.price * (customizations[s.id]?.quantity || 1) : s.price} MXN</li>)}
                       </ul>
+                    </div>
+                    <div className="border-t border-gray-200"></div>
+                     <div>
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-bold text-gray-800">Preferencias</h4>
+                        <button onClick={() => goToStep(0)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
+                      </div>
+                      {customizableServices.map(s => (
+                        customizations[s.id]?.notes && <p key={s.id} className="mt-1 text-sm text-gray-600"><strong>Notas para {s.name}:</strong> {customizations[s.id].notes}</p>
+                      ))}
+                      {inspirationPhotos.length > 0 && <p className="mt-1 text-sm text-gray-600"><strong>Inspiración:</strong> {inspirationPhotos.length} foto(s) subida(s)</p>}
+                       {customizableServices.length === 0 && inspirationPhotos.length === 0 && <p className="mt-1 text-sm text-gray-500">Sin preferencias adicionales.</p>}
                     </div>
                     <div className="border-t border-gray-200"></div>
                     <div>
                       <div className="flex justify-between items-center">
                         <h4 className="font-bold text-gray-800">Profesional</h4>
-                        <button onClick={() => goToStep(0)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
+                        <button onClick={() => goToStep(1)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       <p className="mt-1 text-gray-600">{selectedProfessional?.name}</p>
                     </div>
@@ -366,7 +450,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                     <div>
                       <div className="flex justify-between items-center">
                         <h4 className="font-bold text-gray-800">Fecha y Hora</h4>
-                        <button onClick={() => goToStep(1)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
+                        <button onClick={() => goToStep(2)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       <p className="mt-1 text-gray-600">{selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })} a las {selectedTime}</p>
                     </div>
@@ -374,17 +458,11 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                     <div>
                       <div className="flex justify-between items-center">
                         <h4 className="font-bold text-gray-800">Tus Datos</h4>
-                        <button onClick={() => goToStep(2)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
+                        <button onClick={() => goToStep(3)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       <p className="mt-1 text-gray-600">{clientDetails.name}</p>
                       <p className="text-gray-600">{clientDetails.email}</p>
                       <p className="text-gray-600">{clientDetails.phone}</p>
-                      <p className="mt-2 text-sm text-gray-500">
-                        {reminders.email || reminders.sms 
-                            ? `Recordatorios activados para: ${[reminders.email && 'Email', reminders.sms && 'SMS'].filter(Boolean).join(' y ')}.`
-                            : 'No se enviarán recordatorios.'
-                        }
-                      </p>
                     </div>
                     <div className="border-t border-gray-200"></div>
                     <div className="text-right">
@@ -396,7 +474,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                   </button>
                 </div>
               );
-            case 4: // Payment
+            case 5: // Payment
               return (
                 <div className="fade-in max-w-lg mx-auto text-center">
                     <h3 className="text-2xl font-semibold mb-4">Resumen y Pago</h3>
@@ -404,47 +482,42 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                         <div>
                             <strong className="text-gray-700">Servicios:</strong>
                             <ul className="list-disc list-inside ml-2 text-sm">
-                                {services.map(s => <li key={s.id}>{s.name}</li>)}
+                                {services.map(s => <li key={s.id}>{s.name} {customizations[s.id] ? `(x${customizations[s.id].quantity})` : ''}</li>)}
                             </ul>
                         </div>
                         <p><strong className="text-gray-700">Profesional:</strong> {selectedProfessional?.name}</p>
                         <p><strong className="text-gray-700">Fecha:</strong> {selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })} a las {selectedTime}</p>
-                        <p><strong className="text-gray-700">Cliente:</strong> {clientDetails.name}</p>
                         <p className="font-bold text-lg mt-4 border-t pt-2"><strong className="text-gray-700">Total:</strong> ${totalPrice} MXN</p>
                     </div>
-                     <h4 className="text-lg font-semibold mb-4">Selecciona tu método de pago</h4>
-                     <div className="space-y-4">
-                         <button className="w-full flex items-center justify-center p-4 border rounded-lg hover:bg-gray-100 transition">
-                            <img src="https://logolook.net/wp-content/uploads/2021/07/Mercado-Pago-Logo.png" alt="MercadoPago" className="h-6 mr-4"/> Pagar con MercadoPago
-                         </button>
-                         <button className="w-full flex items-center justify-center p-4 border rounded-lg hover:bg-gray-100 transition">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Oxxo_Logo.svg/1200px-Oxxo_Logo.svg.png" alt="Oxxo" className="h-6 mr-4"/> Pagar en OXXO Pay
-                         </button>
-                     </div>
                     <button onClick={handlePayment} disabled={isProcessing} className="mt-6 w-full inline-flex items-center justify-center bg-pitaya-pink text-white font-semibold py-3 px-10 rounded-full hover:bg-opacity-90 transition transform hover:scale-105 disabled:bg-opacity-70 disabled:cursor-not-allowed">
                         {isProcessing ? (
                             <>
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 Procesando pago...
                             </>
                         ) : ( `Pagar $${totalPrice} MXN` )}
                     </button>
                 </div>
               );
-            case 5: // Confirmation
+            case 6: // Confirmation
               return (
                   <div className="text-center p-8 bg-green-50 rounded-lg border border-green-200 fade-in">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       <h3 className="text-2xl font-semibold text-green-800">¡Cita Confirmada!</h3>
-                      <p className="text-green-700 mt-2 mb-6">Gracias, {clientDetails.name}. Hemos recibido tu pago y tu cita está confirmada. Recibirás un correo electrónico con todos los detalles.</p>
-                      <div className="bg-white p-4 rounded-lg border text-left text-sm space-y-2">
+                      <p className="text-green-700 mt-2 mb-6">Gracias, {clientDetails.name}. Recibirás un correo electrónico con todos los detalles.</p>
+                      <div className="bg-white p-4 rounded-lg border text-left text-sm space-y-2 mb-6">
                         <p><strong>Servicios:</strong> {services.map(s => s.name).join(', ')}</p>
                         <p><strong>Fecha:</strong> {selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })} a las {selectedTime}</p>
                         <p><strong>Profesional:</strong> {selectedProfessional?.name}</p>
                       </div>
-                      <button onClick={onBack} className="mt-6 bg-pitaya-pink text-white font-semibold py-2 px-6 rounded-full hover:bg-opacity-90 transition">
-                          Reservar otra cita
-                      </button>
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                         <button onClick={generateIcsFile} className="bg-gray-600 text-white font-semibold py-2 px-6 rounded-full hover:bg-gray-700 transition">
+                            Añadir al Calendario
+                        </button>
+                        <button onClick={onBack} className="bg-pitaya-pink text-white font-semibold py-2 px-6 rounded-full hover:bg-opacity-90 transition">
+                            Reservar otra cita
+                        </button>
+                      </div>
                   </div>
               );
             default: return null;
@@ -461,7 +534,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
 
     return (
         <div className="max-w-4xl mx-auto bg-white p-6 sm:p-8 md:p-12 rounded-xl shadow-2xl border border-gray-100">
-            {currentStep < 5 && (
+            {currentStep < 6 && (
                 <div className="flex items-center mb-8">
                     <button onClick={goBackStep} className="text-gray-600 hover:text-pitaya-pink transition mr-4 p-2 rounded-full hover:bg-gray-100" aria-label="Volver al paso anterior">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -473,7 +546,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                 </div>
             )}
 
-            {currentStep < 5 && (
+            {currentStep < 6 && (
                 <div className="mb-8 px-4">
                     <div className="flex items-center">
                         {steps.slice(0, -1).map((step, index) => (

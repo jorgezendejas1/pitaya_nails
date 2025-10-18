@@ -10,7 +10,7 @@ export const SERVICES: Service[] = [
   { id: 'pedi-spa', name: 'Pedicura Spa', description: 'Relajante pedicura con exfoliación, masaje y esmaltado perfecto.', duration: 60, price: 550, category: 'Pedicura', imageUrl: 'https://picsum.photos/seed/pedicure/400/300' },
   { id: 'acrilicas', name: 'Uñas Acrílicas Esculturales', description: 'Creación de uñas esculturales con acrílico, personalizadas a tu gusto.', duration: 120, price: 850, category: 'Uñas Esculturales', imageUrl: 'https://picsum.photos/seed/acrylic/400/300' },
   { id: 'gel', name: 'Esmaltado en Gel (Gelish)', description: 'Color duradero y brillante por hasta 3 semanas.', duration: 60, price: 450, category: 'Manicura', imageUrl: 'https://picsum.photos/seed/gelish/400/300' },
-  { id: 'nail-art', name: 'Nail Art Avanzado', description: 'Diseños a mano alzada, pedrería y efectos especiales (precio por uña).', duration: 30, price: 100, category: 'Nail Art', imageUrl: 'https://picsum.photos/seed/nailart/400/300' },
+  { id: 'nail-art', name: 'Nail Art Avanzado', description: 'Diseños a mano alzada, pedrería y efectos especiales (precio por uña).', duration: 30, price: 100, category: 'Nail Art', imageUrl: 'https://picsum.photos/seed/nailart/400/300', isCustomizable: true, customizationPrompt: 'Número de uñas', pricePerUnit: true, durationPerUnit: true },
   { id: 'spa-manos', name: 'Spa de Manos', description: 'Tratamiento rejuvenecedor con exfoliación profunda y mascarilla hidratante.', duration: 40, price: 400, category: 'Spa', imageUrl: 'https://picsum.photos/seed/handspa/400/300' }
 ];
 
