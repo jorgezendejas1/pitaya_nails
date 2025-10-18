@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { Service, TeamMember } from '../types';
 import { TEAM } from '../constants';
 
@@ -6,6 +6,23 @@ interface BookingFlowProps {
     services: Service[];
     onBack: () => void;
 }
+
+const BOOKING_STATE_KEY = 'pitayaNailsBookingState';
+
+const loadBookingState = () => {
+    try {
+        const serializedState = localStorage.getItem(BOOKING_STATE_KEY);
+        if (!serializedState) return undefined;
+        const state = JSON.parse(serializedState);
+        if (state.selectedDate) state.selectedDate = new Date(state.selectedDate);
+        if (state.viewDate) state.viewDate = new Date(state.viewDate);
+        return state;
+    } catch (error) {
+        console.error("Failed to load booking state from localStorage:", error);
+        return undefined;
+    }
+};
+
 
 const steps = ["Preferencias", "Profesional", "Fecha y Hora", "Tus Datos", "Revisar", "Pago", "Confirmado"];
 
@@ -25,20 +42,54 @@ const formatTime = (minutes: number): string => {
 // --- End of constants and helpers ---
 
 const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
-    const [currentStep, setCurrentStep] = useState(0);
-    const [selectedProfessional, setSelectedProfessional] = useState<TeamMember | null>(null);
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [selectedTime, setSelectedTime] = useState<string | null>(null);
-    const [clientDetails, setClientDetails] = useState({ name: '', email: '', phone: '' });
-    const [reminders, setReminders] = useState({ email: true, sms: false });
-    const [viewDate, setViewDate] = useState(new Date());
+    const savedState = useMemo(() => loadBookingState(), []);
+
+    const customizableServices = useMemo(() => services.filter(s => s.isCustomizable), [services]);
+    const initialCustomizations = useMemo(() => Object.fromEntries(
+        customizableServices.map(s => [s.id, { quantity: 1, notes: '' }])
+    ), [customizableServices]);
+
+    const [currentStep, setCurrentStep] = useState(savedState?.currentStep ?? 0);
+    const [selectedProfessional, setSelectedProfessional] = useState<TeamMember | null>(savedState?.selectedProfessional ?? null);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(savedState?.selectedDate ?? null);
+    const [selectedTime, setSelectedTime] = useState<string | null>(savedState?.selectedTime ?? null);
+    const [clientDetails, setClientDetails] = useState(savedState?.clientDetails ?? { name: '', email: '', phone: '' });
+    const [reminders, setReminders] = useState(savedState?.reminders ?? { email: true, sms: false });
+    const [viewDate, setViewDate] = useState(savedState?.viewDate ?? new Date());
     const [isProcessing, setIsProcessing] = useState(false);
     
-    const customizableServices = useMemo(() => services.filter(s => s.isCustomizable), [services]);
-    const [customizations, setCustomizations] = useState<Record<string, { quantity: number; notes: string }>>(() => 
-        Object.fromEntries(customizableServices.map(s => [s.id, { quantity: 1, notes: '' }]))
+    const [customizations, setCustomizations] = useState<Record<string, { quantity: number; notes: string }>>(
+        { ...initialCustomizations, ...(savedState?.customizations ?? {}) }
     );
     const [inspirationPhotos, setInspirationPhotos] = useState<File[]>([]);
+
+
+    // Effect to save state to localStorage
+    useEffect(() => {
+        if (currentStep === 6) return; // Don't save on confirmation step
+        const stateToSave = {
+            currentStep,
+            selectedProfessional,
+            selectedDate,
+            selectedTime,
+            clientDetails,
+            reminders,
+            viewDate,
+            customizations,
+        };
+        try {
+            localStorage.setItem(BOOKING_STATE_KEY, JSON.stringify(stateToSave));
+        } catch (error) {
+            console.error("Failed to save booking state to localStorage:", error);
+        }
+    }, [currentStep, selectedProfessional, selectedDate, selectedTime, clientDetails, reminders, viewDate, customizations]);
+    
+    // Effect to clear state after successful booking
+    useEffect(() => {
+        if (currentStep === 6) {
+            localStorage.removeItem(BOOKING_STATE_KEY);
+        }
+    }, [currentStep]);
 
 
     const { totalPrice, totalDuration } = useMemo(() => {
@@ -413,6 +464,10 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                 </div>
               );
             case 4: // Review Details
+              const handleBackAndClear = () => {
+                localStorage.removeItem(BOOKING_STATE_KEY);
+                onBack();
+              };
               return (
                 <div className="fade-in max-w-lg mx-auto">
                   <h3 className="text-2xl font-semibold mb-6 text-center">Revisa tu cita</h3>
@@ -420,7 +475,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                     <div>
                       <div className="flex justify-between items-center">
                         <h4 className="font-bold text-gray-800">Servicios</h4>
-                        <button onClick={onBack} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
+                        <button onClick={handleBackAndClear} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       <ul className="list-disc list-inside mt-2 text-sm text-gray-600">
                         {services.map(s => <li key={s.id}>{s.name} {customizations[s.id] ? `(x${customizations[s.id].quantity})` : ''} - ${s.pricePerUnit ? s.price * (customizations[s.id]?.quantity || 1) : s.price} MXN</li>)}
@@ -492,7 +547,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                     <button onClick={handlePayment} disabled={isProcessing} className="mt-6 w-full inline-flex items-center justify-center bg-pitaya-pink text-white font-semibold py-3 px-10 rounded-full hover:bg-opacity-90 transition transform hover:scale-105 disabled:bg-opacity-70 disabled:cursor-not-allowed">
                         {isProcessing ? (
                             <>
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 Procesando pago...
                             </>
                         ) : ( `Pagar $${totalPrice} MXN` )}
@@ -528,6 +583,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
        if (currentStep > 0) {
            setCurrentStep(currentStep - 1);
        } else {
+           localStorage.removeItem(BOOKING_STATE_KEY);
            onBack();
        }
     }
