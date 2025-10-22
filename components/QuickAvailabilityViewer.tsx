@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { TeamMember } from '../types';
 import { TEAM } from '../constants';
 
@@ -25,26 +25,39 @@ const QuickAvailabilityViewer: React.FC<QuickAvailabilityViewerProps> = ({ total
     const [selectedProfessional, setSelectedProfessional] = useState<TeamMember | null>(null);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [viewDate, setViewDate] = useState(new Date());
+    const [isLoadingTimes, setIsLoadingTimes] = useState(false);
+    const [timeSlots, setTimeSlots] = useState<string[]>([]);
 
-    const availableTimes = useMemo(() => {
-        if (!selectedDate || !selectedProfessional || totalDuration === 0) return [];
-        const bookedSlots = [{ start: LUNCH_BREAK_START_MIN, end: LUNCH_BREAK_END_MIN }];
-        const availableSlots: string[] = [];
-        for (let time = SALON_OPENS_MIN; time <= SALON_CLOSES_MIN - totalDuration; time += SLOT_INTERVAL) {
-            const slotStart = time;
-            const slotEnd = time + totalDuration;
-            let isAvailable = true;
-            for (const booked of bookedSlots) {
-                if (Math.max(slotStart, booked.start) < Math.min(slotEnd, booked.end)) {
-                    isAvailable = false;
-                    break;
+    useEffect(() => {
+        if (!selectedDate || !selectedProfessional || totalDuration === 0) {
+            setTimeSlots([]);
+            return;
+        }
+    
+        setIsLoadingTimes(true);
+        // Simulate async fetch for a better UX
+        const timer = setTimeout(() => {
+            const bookedSlots = [{ start: LUNCH_BREAK_START_MIN, end: LUNCH_BREAK_END_MIN }];
+            const availableSlots: string[] = [];
+            for (let time = SALON_OPENS_MIN; time <= SALON_CLOSES_MIN - totalDuration; time += SLOT_INTERVAL) {
+                const slotStart = time;
+                const slotEnd = time + totalDuration;
+                let isAvailable = true;
+                for (const booked of bookedSlots) {
+                    if (Math.max(slotStart, booked.start) < Math.min(slotEnd, booked.end)) {
+                        isAvailable = false;
+                        break;
+                    }
+                }
+                if (isAvailable) {
+                    availableSlots.push(formatTime(slotStart));
                 }
             }
-            if (isAvailable) {
-                availableSlots.push(formatTime(slotStart));
-            }
-        }
-        return availableSlots;
+            setTimeSlots(availableSlots);
+            setIsLoadingTimes(false);
+        }, 500);
+    
+        return () => clearTimeout(timer);
     }, [selectedDate, selectedProfessional, totalDuration]);
 
     const handleSelectProfessional = (professional: TeamMember) => {
@@ -163,26 +176,35 @@ const QuickAvailabilityViewer: React.FC<QuickAvailabilityViewerProps> = ({ total
                             </div>
                             <div className="w-full">
                                 <h3 className="text-xl font-semibold mb-4 text-center font-serif">3. Horarios disponibles</h3>
-                                {selectedDate ? (
-                                    <div className="fade-in">
-                                        <h4 className="text-md font-semibold text-center mb-4 font-serif">Para {selectedDate.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric' })}</h4>
-                                        {availableTimes.length > 0 ? (
-                                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                                                {availableTimes.map(time => (
-                                                    <div key={time} className="p-3 border rounded-lg bg-green-50 text-green-800 text-center font-semibold">
-                                                        {time}
-                                                    </div>
-                                                ))}
+                                <div className="min-h-[150px]">
+                                    {selectedDate ? (
+                                        isLoadingTimes ? (
+                                            <div className="flex flex-col justify-center items-center h-full text-gray-500 fade-in pt-4">
+                                                <svg className="animate-spin h-8 w-8 text-pitaya-pink" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                <p className="mt-3 text-sm">Buscando horarios...</p>
                                             </div>
                                         ) : (
-                                            <p className="text-center text-gray-500 p-4 border-2 border-dashed rounded-lg">No hay horarios disponibles para este día con una duración de {totalDuration} min. Por favor, selecciona otra fecha.</p>
-                                        )}
-                                    </div>
-                                ) : (
-                                     <div className="text-center text-gray-500 p-8 border-2 border-dashed rounded-lg">
-                                        <p>Selecciona una fecha en el calendario para ver los horarios.</p>
-                                    </div>
-                                )}
+                                            <div className="fade-in">
+                                                <h4 className="text-md font-semibold text-center mb-4 font-serif">Para {selectedDate.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric' })}</h4>
+                                                {timeSlots.length > 0 ? (
+                                                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                                        {timeSlots.map(time => (
+                                                            <div key={time} className="p-3 border rounded-lg bg-green-50 text-green-800 text-center font-semibold">
+                                                                {time}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-center text-gray-500 p-4 border-2 border-dashed rounded-lg">No hay horarios disponibles para este día con una duración de {totalDuration} min. Por favor, selecciona otra fecha.</p>
+                                                )}
+                                            </div>
+                                        )
+                                    ) : (
+                                        <div className="text-center text-gray-500 p-8 border-2 border-dashed rounded-lg">
+                                            <p>Selecciona una fecha en el calendario para ver los horarios.</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}

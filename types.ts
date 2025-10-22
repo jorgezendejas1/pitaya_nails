@@ -32,3 +32,12 @@ export interface PortfolioImage {
   alt: string;
   category: string;
 }
+
+export interface BookingHistoryItem {
+  id: number;
+  date: string; // ISO string of the original appointment
+  services: { id: string; name: string }[];
+  professionalName: string;
+  totalPrice: number;
+  totalDuration: number;
+}

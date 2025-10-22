@@ -1,6 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Service, TeamMember } from '../types';
-import { TEAM } from '../constants';
+import type { Service, TeamMember, BookingHistoryItem } from '../types';
+import { 
+    TEAM, 
+    SALON_EMAIL_ADDRESS, 
+    CalendarIcon, 
+    UserIcon, 
+    ClipboardListIcon, 
+    PriceTagIcon,
+    SlidersIcon,
+    IdCardIcon,
+    MagnifyingGlassIcon,
+    ShieldCheckIcon
+} from '../constants';
 
 interface BookingFlowProps {
     services: Service[];
@@ -9,6 +20,8 @@ interface BookingFlowProps {
 }
 
 const BOOKING_STATE_KEY = 'pitayaNailsBookingState';
+const BOOKING_HISTORY_KEY = 'pitayaNailsBookingHistory';
+
 
 const loadBookingState = () => {
     try {
@@ -25,7 +38,16 @@ const loadBookingState = () => {
 };
 
 
-const steps = ["Preferencias", "Profesional", "Fecha y Hora", "Tus Datos", "Revisar", "Pago", "Confirmado"];
+const steps = ["Preferencias", "Profesional", "Fecha y Hora", "Tus Datos", "Revisar", "Confirmar", "Solicitud Enviada"];
+const stepIcons = [
+    <SlidersIcon />,
+    <UserIcon />,
+    <CalendarIcon />,
+    <IdCardIcon />,
+    <MagnifyingGlassIcon />,
+    <ShieldCheckIcon />
+];
+
 
 // --- Constants and helpers for availability ---
 const SALON_OPENS_MIN = 10 * 60; // 10:00 AM in minutes from midnight
@@ -71,12 +93,24 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
     const [reminders, setReminders] = useState(savedState?.reminders ?? { email: true, sms: false });
     const [viewDate, setViewDate] = useState(savedState?.viewDate ?? new Date());
     const [isProcessing, setIsProcessing] = useState(false);
+    const [submissionError, setSubmissionError] = useState<string | null>(null);
+    const [isLoadingTimes, setIsLoadingTimes] = useState(false);
+    const [timeSlots, setTimeSlots] = useState<string[]>([]);
+    const [formErrors, setFormErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
+
     
     const [customizations, setCustomizations] = useState<Record<string, { quantity: number; notes: string }>>(
         { ...initialCustomizations, ...(savedState?.customizations ?? {}) }
     );
     const [inspirationPhotos, setInspirationPhotos] = useState<File[]>([]);
 
+    // Automatically set Lily as the professional
+    useEffect(() => {
+        const lily = TEAM.find(member => member.name === 'Lily');
+        if (lily) {
+            setSelectedProfessional(lily);
+        }
+    }, []);
 
     // Effect to save state to localStorage
     useEffect(() => {
@@ -98,11 +132,13 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
         }
     }, [currentStep, selectedProfessional, selectedDate, selectedTime, clientDetails, reminders, viewDate, customizations]);
     
-    // Effect to clear state after successful booking
+    // Effect to clear state and save history after successful booking
     useEffect(() => {
         if (currentStep === 6) {
             localStorage.removeItem(BOOKING_STATE_KEY);
+            saveBookingToHistory();
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentStep]);
 
 
@@ -120,38 +156,49 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
         }, { totalPrice: 0, totalDuration: 0 });
     }, [services, customizations]);
 
-    const availableTimes = useMemo(() => {
-        if (!selectedDate || !selectedProfessional) return [];
-        const bookedSlots = [{ start: LUNCH_BREAK_START_MIN, end: LUNCH_BREAK_END_MIN }];
-        const availableSlots: string[] = [];
-        for (let time = SALON_OPENS_MIN; time <= SALON_CLOSES_MIN - totalDuration; time += SLOT_INTERVAL) {
-            const slotStart = time;
-            const slotEnd = time + totalDuration;
-            let isAvailable = true;
-            for (const booked of bookedSlots) {
-                if (Math.max(slotStart, booked.start) < Math.min(slotEnd, booked.end)) {
-                    isAvailable = false;
-                    break;
+    useEffect(() => {
+        if (!selectedDate || !selectedProfessional) {
+            setTimeSlots([]);
+            return;
+        }
+    
+        setIsLoadingTimes(true);
+        // Simulate async fetch for a better UX, as this could be a real API call
+        const timer = setTimeout(() => {
+            const bookedSlots = [{ start: LUNCH_BREAK_START_MIN, end: LUNCH_BREAK_END_MIN }]; // Simulating booked slots
+            const availableSlots: string[] = [];
+            for (let time = SALON_OPENS_MIN; time <= SALON_CLOSES_MIN - totalDuration; time += SLOT_INTERVAL) {
+                const slotStart = time;
+                const slotEnd = time + totalDuration;
+                let isAvailable = true;
+                for (const booked of bookedSlots) {
+                    if (Math.max(slotStart, booked.start) < Math.min(slotEnd, booked.end)) {
+                        isAvailable = false;
+                        break;
+                    }
+                }
+                if (isAvailable) {
+                    availableSlots.push(formatTime(slotStart));
                 }
             }
-            if (isAvailable) {
-                availableSlots.push(formatTime(slotStart));
-            }
-        }
-        return availableSlots;
+            setTimeSlots(availableSlots);
+            setIsLoadingTimes(false);
+        }, 500);
+    
+        return () => clearTimeout(timer);
     }, [selectedDate, selectedProfessional, totalDuration]);
 
-    const handleNextStep = () => setCurrentStep(prev => prev + 1);
-    const goToStep = (step: number) => setCurrentStep(step);
+    const handleNextStep = () => setCurrentStep(prev => {
+        if (prev === 0) return 2; // From Preferences, skip professional selection to Date & Time
+        return prev + 1;
+    });
 
-    const handleSelectProfessional = (professional: TeamMember) => {
-        setSelectedProfessional(professional);
-        if (selectedDate && professional.unavailableDays.includes(selectedDate.getDay())) {
-            setSelectedDate(null);
-            setSelectedTime(null);
+    const goToStep = (step: number) => {
+        if (step < currentStep) {
+            setSubmissionError(null);
+            setCurrentStep(step);
         }
-        handleNextStep();
-    };
+    }
     
     const handleSelectDate = (day: number) => {
         const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
@@ -165,15 +212,49 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
     };
 
     const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setClientDetails(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        setClientDetails(prev => ({ ...prev, [name]: value }));
+        if (formErrors[name as keyof typeof formErrors]) {
+            setFormErrors(prev => ({ ...prev, [name]: undefined }));
+        }
     };
     
     const handleRemindersChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setReminders(prev => ({ ...prev, [e.target.name]: e.target.checked }));
     };
 
+    const validateClientDetails = () => {
+        const errors: { name?: string; email?: string; phone?: string } = {};
+        const phoneRegex = /^\d+$/;
+
+        if (!clientDetails.name.trim()) errors.name = "El nombre es obligatorio.";
+        
+        if (!clientDetails.email.trim()) {
+            errors.email = "El correo es obligatorio.";
+        } else if (!/\S+@\S+\.\S+/.test(clientDetails.email)) {
+            errors.email = "El formato del correo no es válido.";
+        }
+
+        const phoneTrimmed = clientDetails.phone.trim();
+        if (!phoneTrimmed) {
+            errors.phone = "El teléfono es obligatorio.";
+        } else if (!phoneRegex.test(phoneTrimmed)) {
+            errors.phone = "El teléfono solo debe contener números.";
+        } else if (phoneTrimmed.length < 10) {
+            errors.phone = "El teléfono debe tener al menos 10 dígitos.";
+        }
+        
+        return errors;
+    };
+
     const handleDetailsSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const errors = validateClientDetails();
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            return;
+        }
+        setFormErrors({});
         handleNextStep();
     };
     
@@ -190,12 +271,41 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
         }
     };
     
-    const generateIcsFile = () => {
-        if (!selectedDate || !selectedTime || !selectedProfessional) return;
-
+    const getAppointmentDateTime = () => {
+        if (!selectedDate || !selectedTime) return null;
         const [hours, minutes] = selectedTime.split(':').map(Number);
-        const startDate = new Date(selectedDate);
-        startDate.setHours(hours, minutes, 0, 0);
+        const appointmentDate = new Date(selectedDate);
+        appointmentDate.setHours(hours, minutes, 0, 0);
+        return appointmentDate;
+    };
+    
+    const saveBookingToHistory = () => {
+        const appointmentDate = getAppointmentDateTime();
+        if (!appointmentDate || !selectedProfessional) return;
+
+        const newHistoryItem: BookingHistoryItem = {
+            id: Date.now(),
+            date: appointmentDate.toISOString(),
+            services: services.map(s => ({ id: s.id, name: s.name })),
+            professionalName: selectedProfessional.name,
+            totalPrice,
+            totalDuration,
+        };
+
+        try {
+            const existingHistoryJson = localStorage.getItem(BOOKING_HISTORY_KEY);
+            const existingHistory: BookingHistoryItem[] = existingHistoryJson ? JSON.parse(existingHistoryJson) : [];
+            const updatedHistory = [newHistoryItem, ...existingHistory].slice(0, 5); // Keep last 5 appointments
+            localStorage.setItem(BOOKING_HISTORY_KEY, JSON.stringify(updatedHistory));
+        } catch (error) {
+            console.error("Failed to save booking history:", error);
+        }
+    };
+
+
+    const generateIcsFile = () => {
+        const startDate = getAppointmentDateTime();
+        if (!startDate || !selectedProfessional) return;
         
         const endDate = new Date(startDate.getTime() + totalDuration * 60000);
 
@@ -226,45 +336,109 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
         document.body.removeChild(link);
     };
 
-    const scheduleClientReminder = () => {
-        if (!reminders.email && !reminders.sms) {
-            console.log("User did not opt-in for reminders.");
-            return;
-        }
-
-        if (!selectedDate || !selectedTime || !selectedProfessional) {
-            console.error("Cannot schedule reminder: Missing appointment details.");
-            return;
-        }
-
-        const [hours, minutes] = selectedTime.split(':').map(Number);
-        const appointmentDate = new Date(selectedDate);
-        appointmentDate.setHours(hours, minutes, 0, 0);
-
-        const reminderTime = appointmentDate.getTime() - 24 * 60 * 60 * 1000;
-        const currentTime = Date.now();
-        const delay = reminderTime - currentTime;
-
-        if (delay > 0) {
-            setTimeout(() => {
-                alert(
-                    `Recordatorio de Cita:\n\n¡No lo olvides! Tienes una cita en Pitaya Nails mañana a las ${selectedTime} con ${selectedProfessional.name}.\n\nServicios: ${services.map(s => s.name).join(', ')}.`
-                );
-            }, delay);
-            console.log(`Reminder scheduled for ${new Date(reminderTime).toLocaleString('es-MX')}`);
-        } else {
-            console.log("Reminder time is in the past, not scheduling.");
-        }
-    };
-
-
-    const handlePayment = () => {
+    const handleConfirmAndSubmit = async () => {
+        setSubmissionError(null);
         setIsProcessing(true);
-        setTimeout(() => {
-            scheduleClientReminder();
+
+        const resendApiKey = process.env.RESEND_API_KEY;
+
+        const dateString = selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) || 'No especificada';
+        const servicesListHtml = services.map(s => {
+            if (customizations[s.id]) {
+                return `<li>${s.name} (x${customizations[s.id].quantity})</li>`;
+            }
+            return `<li>${s.name}</li>`;
+        }).join('');
+
+        // Email to Salon Owner
+        const salonEmailHtml = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                <h1 style="color: #e04377;">Nueva Solicitud de Cita</h1>
+                <p>Has recibido una nueva solicitud de cita a través del sitio web.</p>
+                <h2>Detalles del Cliente:</h2>
+                <ul>
+                    <li><strong>Nombre:</strong> ${clientDetails.name}</li>
+                    <li><strong>Email:</strong> ${clientDetails.email}</li>
+                    <li><strong>Teléfono:</strong> ${clientDetails.phone}</li>
+                </ul>
+                <h2>Detalles de la Cita:</h2>
+                <ul>
+                    <li><strong>Profesional:</strong> ${selectedProfessional?.name}</li>
+                    <li><strong>Fecha:</strong> ${dateString}</li>
+                    <li><strong>Hora:</strong> ${selectedTime}</li>
+                </ul>
+                <h2>Servicios Solicitados:</h2>
+                <ul>${servicesListHtml}</ul>
+                <p><strong>Duración Total:</strong> ${totalDuration} minutos</p>
+                <p><strong>Precio Total:</strong> $${totalPrice} MXN</p>
+                <p>Por favor, contacta al cliente para confirmar la cita.</p>
+            </div>
+        `;
+        
+        // Email to Client
+        const clientEmailHtml = `
+             <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                <h1 style="color: #e04377;">¡Hemos recibido tu solicitud de cita, ${clientDetails.name}!</h1>
+                <p>Gracias por elegir Pitaya Nails. Hemos recibido tu solicitud y pronto nos pondremos en contacto contigo para confirmar todos los detalles.</p>
+                <h2>Resumen de tu Solicitud:</h2>
+                <ul>
+                    <li><strong>Profesional:</strong> ${selectedProfessional?.name}</li>
+                    <li><strong>Fecha:</strong> ${dateString}</li>
+                    <li><strong>Hora:</strong> ${selectedTime}</li>
+                </ul>
+                <h2>Servicios:</h2>
+                <ul>${servicesListHtml}</ul>
+                <p><strong>Total Estimado:</strong> $${totalPrice} MXN</p>
+                <p>¡Nos vemos pronto!</p>
+                <br>
+                <p><em>El equipo de Pitaya Nails</em></p>
+            </div>
+        `;
+
+        const sendEmail = (payload: object) => {
+            return fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${resendApiKey}`,
+                },
+                body: JSON.stringify(payload),
+            });
+        };
+
+        try {
+            const salonEmailPayload = {
+                from: 'Reservas <onboarding@resend.dev>', // Should be a verified domain in production
+                to: [SALON_EMAIL_ADDRESS],
+                subject: `Nueva Solicitud de Cita: ${clientDetails.name}`,
+                html: salonEmailHtml,
+            };
+            
+            const clientEmailPayload = {
+                from: 'Pitaya Nails <onboarding@resend.dev>', // Should be a verified domain in production
+                to: [clientDetails.email],
+                subject: 'Tu solicitud de cita en Pitaya Nails',
+                html: clientEmailHtml,
+            };
+
+            const [salonResponse, clientResponse] = await Promise.all([
+                sendEmail(salonEmailPayload),
+                sendEmail(clientEmailPayload)
+            ]);
+
+            if (salonResponse.ok && clientResponse.ok) {
+                handleNextStep(); // Go to confirmation page
+            } else {
+                 const errorText = await salonResponse.text() + await clientResponse.text();
+                 console.error("Resend API error:", errorText);
+                 setSubmissionError("Hubo un error al enviar las notificaciones. Por favor, intenta de nuevo.");
+            }
+        } catch (error) {
+            console.error("Network or other error:", error);
+            setSubmissionError("Error de conexión. Por favor, revisa tu conexión a internet e intenta de nuevo.");
+        } finally {
             setIsProcessing(false);
-            handleNextStep();
-        }, 2500);
+        }
     };
     
     const { calendarWeeks, monthName, year } = useMemo(() => {
@@ -296,6 +470,8 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
         today.setHours(0, 0, 0, 0);
         return date < today || (selectedProfessional?.unavailableDays.includes(date.getDay()) ?? false);
     }
+    
+    const isResendConfigured = !!process.env.RESEND_API_KEY;
 
     const renderStepContent = () => {
         switch (currentStep) {
@@ -354,92 +530,91 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
                         </button>
                     </div>
                 );
-            case 1: // Select Professional
-                return (
-                    <div className="fade-in">
-                        <h3 className="text-2xl font-semibold mb-6 text-center font-serif">Elige una profesional</h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {TEAM.map(member => (
-                                <button key={member.id} onClick={() => handleSelectProfessional(member)} className="text-left p-4 border rounded-lg hover:border-pitaya-pink hover:shadow-lg transition focus:outline-none focus:ring-2 focus:ring-pitaya-pink focus:ring-offset-2">
-                                    <img src={member.imageUrl} alt={member.name} className="w-24 h-24 rounded-full mx-auto mb-4" />
-                                    <h4 className="font-bold text-center text-lg font-serif">{member.name}</h4>
-                                    <p className="text-center text-sm text-gray-500">{member.role}</p>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                );
+            case 1: // Select Professional - THIS STEP IS SKIPPED
+                return null;
             case 2: // Select Date and Time
                 return (
-                     <div className="fade-in max-w-lg mx-auto w-full">
-                        <div className="w-full">
-                            <h3 className="text-xl font-semibold mb-4 text-center font-serif">1. Elige una fecha</h3>
-                            <div className="max-w-xs mx-auto bg-white p-4 rounded-lg border">
-                                <div className="flex justify-between items-center mb-4">
-                                    <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pitaya-pink">&lt;</button>
-                                    <h4 id="month-year-heading" className="font-semibold text-lg capitalize font-serif">{monthName} {year}</h4>
-                                    <button onClick={() => changeMonth(1)} aria-label="Mes siguiente" className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pitaya-pink">&gt;</button>
-                                </div>
-                                <div role="grid" aria-labelledby="month-year-heading">
-                                    <div role="row" className="grid grid-cols-7 text-center text-sm text-gray-500 mb-2">
-                                        {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((day, i) => <div key={i} role="columnheader">{day}</div>)}
+                    <div className="fade-in max-w-4xl mx-auto w-full">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
+                            {/* Calendar Column */}
+                            <div className="w-full">
+                                <h3 className="text-xl font-semibold mb-4 text-center font-serif">Elige una fecha</h3>
+                                <div className="max-w-xs mx-auto bg-white p-4 rounded-lg border">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pitaya-pink">&lt;</button>
+                                        <h4 id="month-year-heading" className="font-semibold text-lg capitalize font-serif">{monthName} {year}</h4>
+                                        <button onClick={() => changeMonth(1)} aria-label="Mes siguiente" className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pitaya-pink">&gt;</button>
                                     </div>
-                                    {calendarWeeks.map((week, weekIndex) => (
-                                        <div key={weekIndex} role="row" className="grid grid-cols-7 text-center">
-                                            {week.map((date, dayIndex) => {
-                                                if (!date) return <div key={dayIndex} className="w-8 h-8 p-1"></div>;
-                                                const isUnavailable = isDateUnavailable(date);
-                                                return (
-                                                    <div key={dayIndex} role="gridcell" className="p-1 flex items-center justify-center">
-                                                        <button 
-                                                            onClick={() => handleSelectDate(date.getDate())}
-                                                            disabled={isUnavailable}
-                                                            aria-disabled={isUnavailable}
-                                                            aria-selected={selectedDate?.getTime() === date.getTime()}
-                                                            aria-label={date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                                            className={`w-8 h-8 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pitaya-pink ${isUnavailable ? 'text-gray-300 cursor-not-allowed line-through' : 'hover:bg-pitaya-pink/20'} ${selectedDate?.getTime() === date.getTime() ? 'bg-pitaya-pink text-white' : 'text-gray-800'}`}
-                                                        >
-                                                            {date.getDate()}
-                                                        </button>
-                                                    </div>
-                                                );
-                                            })}
+                                    <div role="grid" aria-labelledby="month-year-heading">
+                                        <div role="row" className="grid grid-cols-7 text-center text-sm text-gray-500 mb-2">
+                                            {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((day, i) => <div key={i} role="columnheader">{day}</div>)}
                                         </div>
-                                    ))}
+                                        {calendarWeeks.map((week, weekIndex) => (
+                                            <div key={weekIndex} role="row" className="grid grid-cols-7 text-center">
+                                                {week.map((date, dayIndex) => {
+                                                    if (!date) return <div key={dayIndex} className="w-8 h-8 p-1"></div>;
+                                                    const isUnavailable = isDateUnavailable(date);
+                                                    return (
+                                                        <div key={dayIndex} role="gridcell" className="p-1 flex items-center justify-center">
+                                                            <button 
+                                                                onClick={() => handleSelectDate(date.getDate())}
+                                                                disabled={isUnavailable}
+                                                                aria-disabled={isUnavailable}
+                                                                aria-selected={selectedDate?.getTime() === date.getTime()}
+                                                                aria-label={date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                                className={`w-8 h-8 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pitaya-pink ${isUnavailable ? 'text-gray-300 cursor-not-allowed line-through' : 'hover:bg-pitaya-pink/20'} ${selectedDate?.getTime() === date.getTime() ? 'bg-pitaya-pink text-white' : 'text-gray-800'}`}
+                                                            >
+                                                                {date.getDate()}
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="w-full mt-8">
-                            <h3 className="text-xl font-semibold mb-4 text-center font-serif">2. Elige un horario</h3>
-                            <div className="bg-gray-50 p-4 rounded-lg border">
-                                {selectedDate ? (
-                                    <div className="fade-in max-h-80 overflow-y-auto pr-2">
-                                        <h4 className="text-md font-semibold text-center mb-4 font-serif">Disponibles para {selectedDate.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric' })}</h4>
-                                        {availableTimes.length > 0 ? (
-                                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                                                {availableTimes.map(time => (
-                                                    <button 
-                                                        key={time} 
-                                                        onClick={() => handleSelectTime(time)} 
-                                                        className="p-3 border border-gray-300 rounded-lg bg-white text-pitaya-dark font-semibold hover:bg-pitaya-pink hover:text-white hover:border-pitaya-pink transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-pitaya-pink"
-                                                        aria-label={`Reservar a las ${time}`}
-                                                    >
-                                                        {time}
-                                                    </button>
-                                                ))}
+                            
+                            {/* Time Slots Column */}
+                            <div className="w-full">
+                                <h3 className="text-xl font-semibold mb-4 text-center font-serif">Elige un horario</h3>
+                                <div className="bg-gray-50 p-4 rounded-lg border min-h-[410px]">
+                                    {selectedDate ? (
+                                        isLoadingTimes ? (
+                                            <div className="flex flex-col justify-center items-center h-full text-gray-500 fade-in">
+                                                <svg className="animate-spin h-8 w-8 text-pitaya-pink" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                <p className="mt-3">Buscando horarios disponibles...</p>
                                             </div>
                                         ) : (
-                                            <div className="text-center text-pitaya-dark/70 p-6 bg-white rounded-lg border border-dashed">
-                                                <p>No hay horarios disponibles para este día. Por favor, selecciona otra fecha.</p>
+                                            <div className="fade-in max-h-[370px] overflow-y-auto pr-2">
+                                                <h4 className="text-md font-semibold text-center mb-4 font-serif">Disponibles para {selectedDate.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric' })}</h4>
+                                                {timeSlots.length > 0 ? (
+                                                    <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
+                                                        {timeSlots.map(time => (
+                                                            <button 
+                                                                key={time} 
+                                                                onClick={() => handleSelectTime(time)} 
+                                                                className="p-3 border border-gray-300 rounded-lg bg-white text-pitaya-dark font-semibold hover:bg-pitaya-pink hover:text-white hover:border-pitaya-pink transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-pitaya-pink"
+                                                                aria-label={`Reservar a las ${time}`}
+                                                            >
+                                                                {time}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center text-pitaya-dark/70 p-6 bg-white rounded-lg border border-dashed">
+                                                        <p>No hay horarios disponibles para este día. Por favor, selecciona otra fecha.</p>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="text-center text-pitaya-dark/70 p-6 bg-white rounded-lg border border-dashed flex flex-col items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-pitaya-pink/50 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                        <p>Por favor, selecciona una fecha en el calendario para ver los horarios.</p>
-                                    </div>
-                                )}
+                                        )
+                                    ) : (
+                                        <div className="text-center text-pitaya-dark/70 p-6 bg-white rounded-lg border border-dashed flex flex-col items-center justify-center h-full">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-pitaya-pink/50 mb-3" fill="none" viewBox="0 0 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            <p>Por favor, selecciona una fecha en el calendario para ver los horarios.</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -448,18 +623,21 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
               return (
                 <div className="fade-in max-w-md mx-auto">
                   <h3 className="text-2xl font-semibold mb-6 text-center font-serif">Completa tus datos</h3>
-                  <form onSubmit={handleDetailsSubmit} className="space-y-4">
+                  <form onSubmit={handleDetailsSubmit} className="space-y-4" noValidate>
                     <div>
                       <label htmlFor="name" className="block text-sm font-semibold text-gray-700">Nombre Completo</label>
-                      <input type="text" id="name" name="name" value={clientDetails.name} onChange={handleDetailsChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink" required />
+                      <input type="text" id="name" name="name" value={clientDetails.name} onChange={handleDetailsChange} className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink ${formErrors.name ? 'border-red-500' : 'border-gray-300'}`} required />
+                      {formErrors.name && <p className="text-red-600 text-sm mt-1">{formErrors.name}</p>}
                     </div>
                     <div>
                       <label htmlFor="email" className="block text-sm font-semibold text-gray-700">Correo Electrónico</label>
-                      <input type="email" id="email" name="email" value={clientDetails.email} onChange={handleDetailsChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink" required />
+                      <input type="email" id="email" name="email" value={clientDetails.email} onChange={handleDetailsChange} className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink ${formErrors.email ? 'border-red-500' : 'border-gray-300'}`} required />
+                      {formErrors.email && <p className="text-red-600 text-sm mt-1">{formErrors.email}</p>}
                     </div>
                     <div>
                       <label htmlFor="phone" className="block text-sm font-semibold text-gray-700">Teléfono</label>
-                      <input type="tel" id="phone" name="phone" value={clientDetails.phone} onChange={handleDetailsChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink" required />
+                      <input type="tel" id="phone" name="phone" value={clientDetails.phone} onChange={handleDetailsChange} className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink ${formErrors.phone ? 'border-red-500' : 'border-gray-300'}`} required />
+                      {formErrors.phone && <p className="text-red-600 text-sm mt-1">{formErrors.phone}</p>}
                     </div>
                     <div className="pt-2">
                         <p className="block text-sm font-semibold text-gray-700">Recordatorios de Cita</p>
@@ -514,7 +692,6 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
                     <div>
                       <div className="flex justify-between items-center">
                         <h4 className="font-bold text-gray-800 font-serif">Profesional</h4>
-                        <button onClick={() => goToStep(1)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       <p className="mt-1 text-gray-600">{selectedProfessional?.name}</p>
                     </div>
@@ -542,41 +719,94 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
                     </div>
                   </div>
                   <button onClick={handleNextStep} className="mt-6 w-full bg-pitaya-pink text-white font-semibold py-3 px-4 rounded-full hover:bg-opacity-90 transition transform hover:scale-105">
-                    Confirmar y Continuar al Pago
+                    Continuar para Confirmar
                   </button>
                 </div>
               );
-            case 5: // Payment
+            case 5: // Confirm
               return (
                 <div className="fade-in max-w-lg mx-auto text-center">
-                    <h3 className="text-2xl font-semibold mb-4 font-serif">Resumen y Pago</h3>
-                    <div className="bg-gray-50 p-6 rounded-lg shadow-inner border mb-6 text-left space-y-3">
-                        <div>
-                            <strong className="text-gray-700">Servicios:</strong>
-                            <ul className="list-disc list-inside ml-2 text-sm">
-                                {services.map(s => <li key={s.id}>{s.name} {customizations[s.id] ? `(x${customizations[s.id].quantity})` : ''}</li>)}
-                            </ul>
+                    <h3 className="text-2xl font-semibold mb-4 font-serif">Confirmar Solicitud</h3>
+                    <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6 text-left space-y-6">
+
+                        {/* Services Section */}
+                        <div className="flex items-start gap-4">
+                            <div className="bg-pitaya-pink-light p-2 rounded-full">
+                                <ClipboardListIcon className="w-6 h-6 text-pitaya-pink" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-800">Servicios</h4>
+                                <ul className="list-disc list-inside mt-1 text-sm text-gray-600">
+                                    {services.map(s => <li key={s.id}>{s.name} {customizations[s.id] ? `(x${customizations[s.id].quantity})` : ''}</li>)}
+                                </ul>
+                            </div>
                         </div>
-                        <p><strong className="text-gray-700">Profesional:</strong> {selectedProfessional?.name}</p>
-                        <p><strong className="text-gray-700">Fecha:</strong> {selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })} a las {selectedTime}</p>
-                        <p className="font-bold text-lg mt-4 border-t pt-2"><strong className="text-gray-700">Total:</strong> ${totalPrice} MXN</p>
+
+                        {/* Professional Section */}
+                        <div className="flex items-start gap-4">
+                            <div className="bg-pitaya-pink-light p-2 rounded-full">
+                                <UserIcon className="w-6 h-6 text-pitaya-pink" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-800">Profesional</h4>
+                                <p className="mt-1 text-sm text-gray-600">{selectedProfessional?.name}</p>
+                            </div>
+                        </div>
+                        
+                        {/* Date & Time Section */}
+                        <div className="flex items-start gap-4">
+                            <div className="bg-pitaya-pink-light p-2 rounded-full">
+                                <CalendarIcon className="w-6 h-6 text-pitaya-pink" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-800">Fecha y Hora</h4>
+                                <p className="mt-1 text-sm text-gray-600">{selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })} a las {selectedTime}</p>
+                            </div>
+                        </div>
+
+                        <div className="border-t border-gray-200"></div>
+
+                        {/* Total Section */}
+                        <div className="flex items-start gap-4">
+                            <div className="bg-pitaya-pink-light p-2 rounded-full">
+                                <PriceTagIcon className="w-6 h-6 text-pitaya-pink" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-800">Total a Pagar</h4>
+                                <p className="text-lg font-bold text-pitaya-dark mt-1">${totalPrice} MXN</p>
+                            </div>
+                        </div>
+
                     </div>
-                    <button onClick={handlePayment} disabled={isProcessing} className="mt-6 w-full inline-flex items-center justify-center bg-pitaya-pink text-white font-semibold py-3 px-10 rounded-full hover:bg-opacity-90 transition transform hover:scale-105 disabled:bg-opacity-70 disabled:cursor-not-allowed">
+                     {!isResendConfigured ? (
+                       <p className="text-sm text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
+                           <strong>Atención:</strong> La reserva de citas está desactivada. El dueño del sitio necesita configurar la clave de API de Resend.
+                       </p>
+                     ) : (
+                        submissionError && <p className="text-red-600 text-sm mb-4">{submissionError}</p>
+                     )}
+                    <button 
+                        onClick={handleConfirmAndSubmit} 
+                        disabled={isProcessing || !isResendConfigured} 
+                        className="mt-6 w-full inline-flex items-center justify-center bg-pitaya-pink text-white font-semibold py-3 px-10 rounded-full hover:bg-opacity-90 transition transform hover:scale-105 disabled:bg-opacity-50 disabled:cursor-not-allowed"
+                    >
                         {isProcessing ? (
                             <>
                                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                Procesando pago...
+                                Enviando solicitud...
                             </>
-                        ) : ( `Pagar $${totalPrice} MXN` )}
+                        ) : (
+                            'Confirmar y Enviar Solicitud'
+                        )}
                     </button>
                 </div>
               );
             case 6: // Confirmation
               return (
                   <div className="text-center p-8 bg-green-50 rounded-lg border border-green-200 fade-in">
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      <h3 className="text-2xl font-semibold text-green-800 font-serif">¡Cita Confirmada!</h3>
-                      <p className="text-green-700 mt-2 mb-6">Gracias, {clientDetails.name}. Recibirás un correo electrónico con todos los detalles.</p>
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <h3 className="text-2xl font-semibold text-green-800 font-serif">¡Solicitud de Cita Enviada!</h3>
+                      <p className="text-green-700 mt-2 mb-6">Gracias, {clientDetails.name}. Hemos recibido tu solicitud. Te contactaremos por correo o WhatsApp para confirmar tu cita. ¡Nos vemos pronto!</p>
                       <div className="bg-white p-4 rounded-lg border text-left text-sm space-y-2 mb-6">
                         <p><strong>Servicios:</strong> {services.map(s => s.name).join(', ')}</p>
                         <p><strong>Fecha:</strong> {selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })} a las {selectedTime}</p>
@@ -598,7 +828,11 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
     
     const goBackStep = () => {
        if (currentStep > 0) {
-           setCurrentStep(currentStep - 1);
+           let newStep = currentStep - 1;
+           if (newStep === 1) { // If going back to step 1 (Professional), which is now skipped
+               newStep = 0; // Go to step 0 (Preferences) instead
+           }
+           goToStep(newStep);
        } else {
            localStorage.removeItem(BOOKING_STATE_KEY);
            onBack();
@@ -610,7 +844,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
             {currentStep < 6 && (
                 <div className="flex items-center mb-8">
                     <button onClick={goBackStep} className="text-gray-600 hover:text-pitaya-pink transition mr-4 p-2 rounded-full hover:bg-gray-100" aria-label="Volver al paso anterior">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
                     </button>
                     <div>
                       <h2 className="text-2xl md:text-3xl font-bold text-pitaya-dark font-serif">{services.length > 1 ? `${services.length} Servicios Seleccionados` : services[0]?.name}</h2>
@@ -620,24 +854,53 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
             )}
 
             {currentStep < 6 && (
-                 <div className="mb-8 px-4 relative">
+                <div className="mb-12 relative">
                     {/* Background line */}
-                    <div className="absolute top-4 left-4 right-4 h-1 bg-gray-200" aria-hidden="true"></div>
+                    <div 
+                        className="absolute top-5 h-1 bg-gray-200"
+                        style={{ left: 'calc(100% / 12)', width: 'calc(100% * 10 / 12)' }}
+                        aria-hidden="true"
+                    ></div>
                     {/* Active progress line */}
                     <div 
-                        className="absolute top-4 left-4 h-1 bg-pitaya-pink transition-all duration-500"
-                        style={{ width: `calc(${(currentStep / (steps.length - 2)) * 100}% - 2rem)` }}
+                        className="absolute top-5 h-1 bg-pitaya-pink transition-all duration-500"
+                        style={{
+                            left: 'calc(100% / 12)',
+                            width: `calc((100% * 10 / 12) * ${currentStep / (steps.length - 2)})` 
+                        }}
                     ></div>
 
-                    <div className="flex items-start justify-between relative">
-                        {steps.slice(0, -1).map((step, index) => (
-                            <div key={index} className="flex flex-col items-center text-center w-16 z-10">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${index <= currentStep ? 'bg-pitaya-pink text-white' : 'bg-white text-gray-500 border-2 border-gray-300'}`}>
-                                   {index < currentStep ? '✓' : index + 1}
-                                </div>
-                                <p className={`mt-2 text-xs transition-colors duration-300 ${index <= currentStep ? 'text-pitaya-pink font-semibold' : 'text-gray-500'}`}>{step}</p>
-                            </div>
-                        ))}
+                    <div className="grid grid-cols-6 relative">
+                        {steps.slice(0, -1).map((step, index) => {
+                            const isCompleted = index < currentStep;
+                            const isCurrent = index === currentStep;
+                            return (
+                                <button
+                                    key={index}
+                                    onClick={() => goToStep(index)}
+                                    disabled={!isCompleted}
+                                    className={`flex flex-col items-center text-center z-10 px-1 min-w-0 group focus:outline-none ${isCompleted ? 'cursor-pointer' : 'cursor-default'}`}
+                                    aria-label={`Ir al paso: ${step}`}
+                                >
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                                        isCompleted ? 'bg-pitaya-pink text-white group-hover:bg-opacity-80' : 
+                                        isCurrent ? 'bg-pitaya-pink text-white scale-110 shadow-lg ring-4 ring-pitaya-pink/30' : 
+                                        'bg-white text-gray-400 border-2 border-gray-300'
+                                    }`}>
+                                    {isCompleted ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                                    ) : (
+                                        React.cloneElement(stepIcons[index], { className: `h-5 w-5 ${isCurrent ? 'text-white' : 'text-gray-400'}` })
+                                    )}
+                                    </div>
+                                    <p className={`mt-2 text-xs break-words font-semibold transition-colors duration-300 ${
+                                        isCurrent ? 'text-pitaya-pink' : 
+                                        isCompleted ? 'text-gray-700' : 
+                                        'text-gray-500'
+                                    }`}>{step}</p>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             )}

@@ -17,7 +17,7 @@ const Home: React.FC = () => {
       >
         <div 
             className="absolute inset-0 bg-cover bg-center hero-image-reveal"
-            style={{ backgroundImage: "url('https://picsum.photos/seed/elegant-manicure/1920/1080')" }}
+            style={{ backgroundImage: "url('https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/hero-background.png')" }}
         ></div>
         <div className="absolute inset-0 bg-black/30"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-pitaya-pearl/20 to-transparent"></div>

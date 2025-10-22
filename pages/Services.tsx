@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { SERVICES, MagnifyingGlassIcon } from '../constants';
-import type { Service } from '../types';
+import type { Service, BookingHistoryItem } from '../types';
 import BookingFlow from '../components/BookingFlow';
 import QuickAvailabilityViewer from '../components/QuickAvailabilityViewer';
+import BookingHistory from '../components/BookingHistory';
 
 // Icon for Grid View
 const GridIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
         <rect x="3" y="3" width="7" height="7"></rect>
         <rect x="14" y="3" width="7" height="7"></rect>
         <rect x="14" y="14" width="7" height="7"></rect>
@@ -17,7 +18,7 @@ const GridIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 // Icon for List View
 const ListIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
         <line x1="8" y1="6" x2="21" y2="6"></line>
         <line x1="8" y1="12" x2="21" y2="12"></line>
         <line x1="8" y1="18" x2="21" y2="18"></line>
@@ -147,6 +148,21 @@ const Services: React.FC = () => {
         }
     };
     
+    const handleRebook = (historyItem: BookingHistoryItem) => {
+        const servicesToBook = historyItem.services
+            .map(histService => SERVICES.find(s => s.id === histService.id))
+            .filter((s): s is Service => !!s)
+            .map(service => ({ service, quantity: 1 })); // Default quantity to 1 for simplicity
+
+        if(servicesToBook.length > 0) {
+            setSelectedServices(servicesToBook);
+            setIsBooking(true);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            alert("Algunos de los servicios de esta cita ya no están disponibles.");
+        }
+    };
+
     const initialCustomizationsForBooking = useMemo(() => (
         Object.fromEntries(
             selectedServices
@@ -177,6 +193,8 @@ const Services: React.FC = () => {
                             <p className="text-lg text-pitaya-dark/70 mt-2">Elige tu tratamiento y reserva tu momento de belleza.</p>
                         </div>
                         
+                        <BookingHistory onRebook={handleRebook} />
+
                         <div className="space-y-6 mb-10">
                             <div className="relative max-w-lg mx-auto">
                                 <span className="absolute inset-y-0 left-0 flex items-center pl-4">

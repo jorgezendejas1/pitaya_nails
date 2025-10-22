@@ -7,7 +7,7 @@ const About: React.FC = () => {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     <div>
-                        <img src="https://picsum.photos/seed/salon-interior/800/600" alt="Interior de Pitaya Nails" className="rounded-lg shadow-2xl" />
+                        <img src="https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/salon-interior.png" alt="Interior de Pitaya Nails" className="rounded-lg shadow-2xl" />
                     </div>
                     <div className="text-center lg:text-left">
                         <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark font-serif">Nuestra Historia</h1>
