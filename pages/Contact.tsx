@@ -4,16 +4,51 @@ import InteractiveMap from '../components/InteractiveMap';
 
 const Contact: React.FC = () => {
     const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+    const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+    const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string }>({});
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        // Clear the error for this field when the user starts typing
+        if (errors[name as keyof typeof errors]) {
+            setErrors(prev => ({ ...prev, [name]: undefined }));
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors: { name?: string; email?: string; message?: string } = {};
+        if (!formData.name.trim()) {
+            newErrors.name = 'El nombre es obligatorio.';
+        }
+        if (!formData.email.trim()) {
+            newErrors.email = 'El email es obligatorio.';
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = 'El formato del email no es válido.';
+        }
+        if (!formData.message.trim()) {
+            newErrors.message = 'El mensaje es obligatorio.';
+        }
+        return newErrors;
+    };
+
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        const validationErrors = validateForm();
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return; // Stop submission if there are errors
+        }
+
         setSubmissionStatus('submitting');
-        const formData = new FormData(event.currentTarget);
+        const formElement = event.currentTarget;
+        const formSpreeData = new FormData(formElement);
 
         try {
             const response = await fetch(FORMSPREE_ENDPOINT, {
                 method: 'POST',
-                body: formData,
+                body: formSpreeData,
                 headers: {
                     'Accept': 'application/json'
                 }
@@ -21,9 +56,10 @@ const Contact: React.FC = () => {
 
             if (response.ok) {
                 setSubmissionStatus('success');
-                event.currentTarget.reset();
+                setFormData({ name: '', email: '', message: '' });
+                setErrors({});
+                formElement.reset();
             } else {
-                // Formspree returns error details in JSON
                 setSubmissionStatus('error');
             }
         } catch (error) {
@@ -54,18 +90,45 @@ const Contact: React.FC = () => {
                                    <strong>Atención:</strong> Para activar este formulario, necesitas reemplazar <code>YOUR_FORM_ID</code> en el archivo <code>constants.tsx</code> con tu ID de Formspree.
                                </p>
                             )}
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                                 <div>
                                     <label htmlFor="name" className="block text-sm font-semibold text-gray-700">Nombre</label>
-                                    <input type="text" id="name" name="name" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink" />
+                                    <input 
+                                        type="text" 
+                                        id="name" 
+                                        name="name" 
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        required 
+                                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink ${errors.name ? 'border-red-500' : 'border-gray-300'}`} 
+                                    />
+                                    {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
                                 </div>
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-semibold text-gray-700">Email</label>
-                                    <input type="email" id="email" name="_replyto" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink" />
+                                    <input 
+                                        type="email" 
+                                        id="email" 
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        required 
+                                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink ${errors.email ? 'border-red-500' : 'border-gray-300'}`} 
+                                    />
+                                    {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
                                 </div>
                                 <div>
                                     <label htmlFor="message" className="block text-sm font-semibold text-gray-700">Mensaje</label>
-                                    <textarea id="message" name="message" rows={5} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink"></textarea>
+                                    <textarea 
+                                        id="message" 
+                                        name="message" 
+                                        rows={5} 
+                                        value={formData.message}
+                                        onChange={handleChange}
+                                        required 
+                                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-pitaya-pink focus:border-pitaya-pink ${errors.message ? 'border-red-500' : 'border-gray-300'}`}
+                                    ></textarea>
+                                    {errors.message && <p className="text-red-600 text-sm mt-1">{errors.message}</p>}
                                 </div>
                                 <div>
                                     <button 
@@ -100,7 +163,7 @@ const Contact: React.FC = () => {
                     <div>
                         <h2 className="text-2xl font-bold mb-4 text-pitaya-dark font-serif">Nuestra Ubicación</h2>
                         <div className="h-96 rounded-lg overflow-hidden shadow-lg">
-                           <InteractiveMap lat={21.1619} lng={-86.8515} zoom={13} />
+                           <InteractiveMap lat={21.1115} lng={-86.8430} zoom={15} />
                         </div>
                     </div>
                 </div>

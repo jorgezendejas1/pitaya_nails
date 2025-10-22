@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Service, TeamMember, Testimonial, PortfolioImage } from './types';
 
-export const WHATSAPP_LINK = "https://wa.me/5219841123411?text=Hola,+quiero+agendar+una+cita+en+Pitaya+Nails.";
+export const WHATSAPP_LINK = "https://wa.me/529841123411?text=Hola,+quiero+agendar+una+cita+en+Pitaya+Nails.";
 export const INSTAGRAM_LINK = "https://www.instagram.com/nailstation_cun";
 export const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID"; // Replace YOUR_FORM_ID with your actual Formspree form ID
 

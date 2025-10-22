@@ -62,12 +62,12 @@ const Footer: React.FC = () => {
                             <li className="flex items-center justify-center sm:justify-start">
                                 <LocationMarkerIcon className="w-5 h-5 mr-3 text-pitaya-pink flex-shrink-0" />
                                 <a 
-                                    href="https://www.google.com/maps/search/?api=1&query=Pitaya+Nails+Cancun" 
+                                    href="https://www.google.com/maps/search/?api=1&query=Jardines+del+Sur+5+Cancun+77536" 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
                                     className="hover:text-pitaya-pink transition-colors"
                                 >
-                                    Av. Principal 123, Cancún
+                                    Jardines del Sur 5, CP 77536, Cancún
                                 </a>
                             </li>
                             <li className="flex items-center justify-center sm:justify-start">
