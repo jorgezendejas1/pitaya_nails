@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { Service, TeamMember, BookingHistoryItem } from '../types';
 import { 
     TEAM, 
-    SALON_EMAIL_ADDRESS, 
+    FORMSPREE_ENDPOINT, 
     CalendarIcon, 
     UserIcon, 
     ClipboardListIcon, 
@@ -340,98 +340,65 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
         setSubmissionError(null);
         setIsProcessing(true);
     
-        const resendApiKey = process.env.RESEND_API_KEY;
+        if (FORMSPREE_ENDPOINT.includes('YOUR_FORM_ID')) {
+            setSubmissionError("La función de reserva no está configurada. El administrador del sitio debe proporcionar un ID de formulario válido.");
+            setIsProcessing(false);
+            return;
+        }
     
+        const formData = new FormData();
+        formData.append('name', clientDetails.name);
+        formData.append('email', clientDetails.email);
+        formData.append('phone', clientDetails.phone);
+        formData.append('professional', selectedProfessional?.name || 'No especificado');
         const dateString = selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) || 'No especificada';
-        const servicesListHtml = services.map(s => {
-            if (customizations[s.id]) {
-                return `<li>${s.name} (x${customizations[s.id].quantity})</li>`;
-            }
-            return `<li>${s.name}</li>`;
-        }).join('');
-    
-        // Email to Salon Owner
-        const salonEmailHtml = `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <h1 style="color: #e04377;">Nueva Solicitud de Cita</h1>
-                <p>Has recibido una nueva solicitud de cita a través del sitio web.</p>
-                <h2>Detalles del Cliente:</h2>
-                <ul>
-                    <li><strong>Nombre:</strong> ${clientDetails.name}</li>
-                    <li><strong>Email:</strong> ${clientDetails.email}</li>
-                    <li><strong>Teléfono:</strong> ${clientDetails.phone}</li>
-                </ul>
-                <h2>Detalles de la Cita:</h2>
-                <ul>
-                    <li><strong>Profesional:</strong> ${selectedProfessional?.name}</li>
-                    <li><strong>Fecha:</strong> ${dateString}</li>
-                    <li><strong>Hora:</strong> ${selectedTime}</li>
-                </ul>
-                <h2>Servicios Solicitados:</h2>
-                <ul>${servicesListHtml}</ul>
-                <p><strong>Duración Total:</strong> ${totalDuration} minutos</p>
-                <p><strong>Precio Total:</strong> $${totalPrice} MXN</p>
-                <p>Por favor, contacta al cliente para confirmar la cita.</p>
-            </div>
-        `;
+        formData.append('date', dateString);
+        formData.append('time', selectedTime || 'No especificado');
         
-        // Email to Client
-        const clientEmailHtml = `
-             <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                <h1 style="color: #e04377;">¡Hemos recibido tu solicitud de cita, ${clientDetails.name}!</h1>
-                <p>Gracias por elegir Pitaya Nails. Hemos recibido tu solicitud y pronto nos pondremos en contacto contigo para confirmar todos los detalles.</p>
-                <h2>Resumen de tu Solicitud:</h2>
-                <ul>
-                    <li><strong>Profesional:</strong> ${selectedProfessional?.name}</li>
-                    <li><strong>Fecha:</strong> ${dateString}</li>
-                    <li><strong>Hora:</strong> ${selectedTime}</li>
-                </ul>
-                <h2>Servicios:</h2>
-                <ul>${servicesListHtml}</ul>
-                <p><strong>Total Estimado:</strong> $${totalPrice} MXN</p>
-                <p>¡Nos vemos pronto!</p>
-                <br>
-                <p><em>El equipo de Pitaya Nails</em></p>
-            </div>
-        `;
+        const servicesList = services.map(s => {
+            if (customizations[s.id]) {
+                return `${s.name} (x${customizations[s.id].quantity})`;
+            }
+            return s.name;
+        }).join(', ');
+        formData.append('services', servicesList);
     
-        const sendEmail = (payload: object) => {
-            return fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${resendApiKey}`,
-                },
-                body: JSON.stringify(payload),
+        const customizationNotes = Object.entries(customizations)
+            .filter(([, details]) => details.notes.trim() !== '')
+            .map(([serviceId, details]) => {
+                const service = services.find(s => s.id === serviceId);
+                return `${service?.name}: ${details.notes}`;
+            })
+            .join('; ');
+    
+        if (customizationNotes) {
+            formData.append('customization_notes', customizationNotes);
+        }
+        
+        if (inspirationPhotos.length > 0) {
+            inspirationPhotos.forEach((photo, index) => {
+                formData.append(`inspiration_photo_${index + 1}`, photo);
             });
-        };
+        }
+    
+        formData.append('total_duration', `${totalDuration} minutos`);
+        formData.append('total_price', `$${totalPrice} MXN`);
+        formData.append('_subject', `Nueva Solicitud de Cita: ${clientDetails.name}`);
+        formData.append('_replyto', clientDetails.email); // For Formspree auto-reply
     
         try {
-            const salonEmailPayload = {
-                from: 'Reservas <onboarding@resend.dev>',
-                to: [SALON_EMAIL_ADDRESS],
-                subject: `Nueva Solicitud de Cita: ${clientDetails.name}`,
-                html: salonEmailHtml,
-            };
-            
-            const clientEmailPayload = {
-                from: 'Pitaya Nails <onboarding@resend.dev>',
-                to: [clientDetails.email],
-                subject: 'Tu solicitud de cita en Pitaya Nails',
-                html: clientEmailHtml,
-            };
+            const response = await fetch(FORMSPREE_ENDPOINT, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
     
-            const [salonResponse, clientResponse] = await Promise.all([
-                sendEmail(salonEmailPayload),
-                sendEmail(clientEmailPayload)
-            ]);
-    
-            if (salonResponse.ok && clientResponse.ok) {
+            if (response.ok) {
                 handleNextStep(); // Go to confirmation page
             } else {
-                 const errorText = await salonResponse.text() + await clientResponse.text();
-                 console.error("Resend API error:", errorText);
-                 setSubmissionError("Hubo un error al enviar las notificaciones. Por favor, intenta de nuevo.");
+                setSubmissionError("Hubo un error al enviar la solicitud. Por favor, intenta de nuevo.");
             }
         } catch (error) {
             console.error("Network or other error:", error);

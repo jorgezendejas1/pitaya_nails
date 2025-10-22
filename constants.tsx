@@ -4,8 +4,10 @@ import type { Service, TeamMember, Testimonial, PortfolioImage, BeforeAfterImage
 export const WHATSAPP_LINK = "https://wa.me/529841123411?text=Hola,+quiero+agendar+una+cita+en+Pitaya+Nails.";
 export const INSTAGRAM_LINK = "https://www.instagram.com/nailstation_cun";
 export const SALON_EMAIL_ADDRESS = "info@pitayanails.com"; // Email for receiving booking notifications
-// ATTENTION: Replace YOUR_FORM_ID with your actual Formspree form ID to enable the contact form.
-export const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID";
+
+// --- FORM CONFIGURATION ---
+// Endpoint for contact and booking forms, powered by Formspree.
+export const FORMSPREE_ENDPOINT = "https://formspree.io/f/mblzvynn";
 
 export const SERVICES: Service[] = [
   { id: 'mani-classic', name: 'Manicura Clásica', description: 'Cuidado completo de uñas y cutículas con esmaltado tradicional.', duration: 45, price: 350, category: 'Manicura', imageUrl: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/mani-classic.png' },
