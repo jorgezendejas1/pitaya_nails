@@ -28,12 +28,19 @@ export const TESTIMONIALS: Testimonial[] = [
 
 export const PORTFOLIO_CATEGORIES = ['Todos', 'Manicura', 'Pedicura', 'Uñas Esculturales', 'Nail Art'];
 
-export const PORTFOLIO_IMAGES: PortfolioImage[] = Array.from({ length: 100 }, (_, i) => ({
-  id: i,
-  src: `https://picsum.photos/seed/nail-design-${i}/600/800`,
-  alt: `Diseño de uñas ${i + 1}`,
-  category: PORTFOLIO_CATEGORIES[(i % 4) + 1],
-}));
+export const PORTFOLIO_IMAGES: PortfolioImage[] = [
+    { id: 0, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/nail-design-1.png', alt: 'Diseño de uñas francés con detalles dorados', category: 'Manicura' },
+    { id: 1, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/nail-design-2.png', alt: 'Diseño de uñas ombré lila y blanco con pedrería', category: 'Uñas Esculturales' },
+    { id: 2, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/nail-design-3.png', alt: 'Diseño de uñas rosa pálido largas y elegantes', category: 'Manicura' },
+    { id: 3, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/nail-design-4.png', alt: 'Diseño de uñas holográfico con líneas de colores', category: 'Nail Art' },
+    ...Array.from({ length: 96 }, (_, i) => ({
+        id: i + 4,
+        src: `https://picsum.photos/seed/nail-design-${i}/600/800`,
+        alt: `Diseño de uñas ${i + 5}`,
+        category: PORTFOLIO_CATEGORIES[((i+4) % 4) + 1],
+    }))
+];
+
 
 export const DIPLOMAS_IMAGES = Array.from({ length: 6 }, (_, i) => ({
   id: i,
@@ -52,5 +59,45 @@ export const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" {...props}>
         <path d="M12 2.04C6.5 2.04 2.04 6.5 2.04 12c0 1.8.46 3.48 1.32 5L2 22l5.25-1.38c1.45.83 3.08 1.32 4.75 1.32 5.48 0 9.92-4.44 9.92-9.92C21.92 6.5 17.48 2.04 12 2.04zm4.88 11.52c-.24-.12-1.4-.7-1.62-.78s-.38-.12-.54.12c-.16.24-.6.78-.75.94s-.3.18-.54.06c-.24-.12-1.02-.38-1.94-1.2s-1.42-1.82-1.66-2.12c-.24-.3-.02-.46.1-.6.12-.12.26-.32.4-.42.12-.12.18-.2.24-.34.06-.12.02-.24-.04-.34s-.54-1.3-.74-1.8c-.18-.48-.38-.4-.52-.4h-.5c-.16 0-.42.06-.64.3s-.86.84-.86 2.04c0 1.2.88 2.36 1 2.52.12.16 1.74 2.8 4.22 3.72.6.22 1.06.36 1.42.46.56.16 1.08.14 1.48-.08.42-.22 1.24-.98 1.4-1.36.18-.38.18-.7.12-.82s-.18-.18-.42-.3z"/>
+    </svg>
+);
+
+export const LocationMarkerIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+    </svg>
+);
+
+export const PhoneIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 6.75z" />
+    </svg>
+);
+
+export const MailIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+    </svg>
+);
+
+export const ClockIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
+export const CalendarIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+        <line x1="16" y1="2" x2="16" y2="6"></line>
+        <line x1="8" y1="2" x2="8" y2="6"></line>
+        <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+);
+
+export const MagnifyingGlassIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
     </svg>
 );

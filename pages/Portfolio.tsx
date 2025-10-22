@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PORTFOLIO_IMAGES, PORTFOLIO_CATEGORIES } from '../constants';
+import { PORTFOLIO_IMAGES, PORTFOLIO_CATEGORIES, MagnifyingGlassIcon } from '../constants';
 import type { PortfolioImage } from '../types';
 
 // Icon for Masonry View
@@ -177,7 +177,7 @@ const Portfolio: React.FC = () => {
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
             <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark">Nuestro Trabajo</h1>
+                <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark font-serif">Nuestro Trabajo</h1>
                 <p className="text-lg text-pitaya-dark/70 mt-2">Inspírate con algunos de nuestros diseños favoritos.</p>
             </div>
 
@@ -212,15 +212,19 @@ const Portfolio: React.FC = () => {
                 {filteredImages.map((image, index) => (
                     <div 
                         key={image.id} 
-                        className={viewMode === 'masonry' ? 'masonry-item' : 'aspect-square'} 
+                        className={`relative group overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer ${viewMode === 'masonry' ? 'masonry-item' : 'aspect-square'}`} 
                         onClick={() => openLightbox(index)}
                     >
                         <img 
                             src={image.src} 
                             alt={image.alt} 
-                            className={`rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-all duration-300 cursor-pointer w-full h-full ${viewMode === 'gallery' ? 'object-cover' : ''}`}
+                            className={`w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300`}
                             loading="lazy"
                         />
+                        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                             <MagnifyingGlassIcon className="w-8 h-8 mb-2" />
+                            <p className="text-sm font-semibold">Ver Diseño</p>
+                        </div>
                     </div>
                 ))}
             </div>

@@ -11,7 +11,7 @@ interface CallToActionBannerProps {
 const CallToActionBanner: React.FC<CallToActionBannerProps> = ({ title, subtitle, buttonText, buttonLink }) => {
     return (
         <div className="bg-pitaya-pink text-white rounded-lg shadow-xl p-8 md:py-12 md:px-8 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">{title}</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 font-serif">{title}</h2>
             <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8">{subtitle}</p>
             <Link
                 to={buttonLink}

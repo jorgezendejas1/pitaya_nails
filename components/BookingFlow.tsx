@@ -288,11 +288,11 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
             case 0: // Preferences
                 return (
                     <div className="fade-in max-w-lg mx-auto w-full">
-                        <h3 className="text-2xl font-semibold mb-6 text-center">Preferencias y Detalles</h3>
+                        <h3 className="text-2xl font-semibold mb-6 text-center font-serif">Preferencias y Detalles</h3>
                         <div className="space-y-8">
                             {customizableServices.map(service => (
                                 <div key={service.id} className="p-4 border rounded-lg">
-                                    <h4 className="font-bold text-lg text-pitaya-dark">{service.name}</h4>
+                                    <h4 className="font-bold text-lg text-pitaya-dark font-serif">{service.name}</h4>
                                     <div className="mt-4 space-y-4">
                                         <div>
                                             <label htmlFor={`quantity-${service.id}`} className="block text-sm font-semibold text-gray-700">{service.customizationPrompt}</label>
@@ -320,7 +320,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                                 </div>
                             ))}
                              <div>
-                                <h4 className="text-lg font-semibold text-gray-800 mb-2">Inspiración</h4>
+                                <h4 className="text-lg font-semibold text-gray-800 mb-2 font-serif">Inspiración</h4>
                                 <label htmlFor="inspiration-upload" className="block text-sm font-semibold text-gray-700">Sube fotos de diseños que te gusten (opcional)</label>
                                 <input 
                                     type="file" 
@@ -343,12 +343,12 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
             case 1: // Select Professional
                 return (
                     <div className="fade-in">
-                        <h3 className="text-2xl font-semibold mb-6 text-center">Elige una profesional</h3>
+                        <h3 className="text-2xl font-semibold mb-6 text-center font-serif">Elige una profesional</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {TEAM.map(member => (
                                 <button key={member.id} onClick={() => handleSelectProfessional(member)} className="text-left p-4 border rounded-lg hover:border-pitaya-pink hover:shadow-lg transition focus:outline-none focus:ring-2 focus:ring-pitaya-pink focus:ring-offset-2">
                                     <img src={member.imageUrl} alt={member.name} className="w-24 h-24 rounded-full mx-auto mb-4" />
-                                    <h4 className="font-bold text-center text-lg">{member.name}</h4>
+                                    <h4 className="font-bold text-center text-lg font-serif">{member.name}</h4>
                                     <p className="text-center text-sm text-gray-500">{member.role}</p>
                                 </button>
                             ))}
@@ -360,11 +360,11 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                      <div className="fade-in">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
                             <div className="w-full">
-                                <h3 className="text-xl font-semibold mb-4 text-center">1. Elige una fecha</h3>
+                                <h3 className="text-xl font-semibold mb-4 text-center font-serif">1. Elige una fecha</h3>
                                 <div className="max-w-xs mx-auto bg-white p-4 rounded-lg border">
                                     <div className="flex justify-between items-center mb-4">
                                         <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pitaya-pink">&lt;</button>
-                                        <h4 id="month-year-heading" className="font-semibold text-lg capitalize">{monthName} {year}</h4>
+                                        <h4 id="month-year-heading" className="font-semibold text-lg capitalize font-serif">{monthName} {year}</h4>
                                         <button onClick={() => changeMonth(1)} aria-label="Mes siguiente" className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pitaya-pink">&gt;</button>
                                     </div>
                                     <div role="grid" aria-labelledby="month-year-heading">
@@ -397,10 +397,10 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                                 </div>
                             </div>
                             <div className="w-full">
-                                <h3 className="text-xl font-semibold mb-4 text-center">2. Elige un horario</h3>
+                                <h3 className="text-xl font-semibold mb-4 text-center font-serif">2. Elige un horario</h3>
                                 {selectedDate ? (
                                     <div className="fade-in max-h-80 overflow-y-auto pr-2">
-                                        <h4 className="text-md font-semibold text-center mb-4">Disponibles para {selectedDate.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric' })}</h4>
+                                        <h4 className="text-md font-semibold text-center mb-4 font-serif">Disponibles para {selectedDate.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric' })}</h4>
                                         {availableTimes.length > 0 ? (
                                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                                                 {availableTimes.map(time => (
@@ -430,7 +430,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
             case 3: // Your Details
               return (
                 <div className="fade-in max-w-md mx-auto">
-                  <h3 className="text-2xl font-semibold mb-6 text-center">Completa tus datos</h3>
+                  <h3 className="text-2xl font-semibold mb-6 text-center font-serif">Completa tus datos</h3>
                   <form onSubmit={handleDetailsSubmit} className="space-y-4">
                     <div>
                       <label htmlFor="name" className="block text-sm font-semibold text-gray-700">Nombre Completo</label>
@@ -470,11 +470,11 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
               };
               return (
                 <div className="fade-in max-w-lg mx-auto">
-                  <h3 className="text-2xl font-semibold mb-6 text-center">Revisa tu cita</h3>
+                  <h3 className="text-2xl font-semibold mb-6 text-center font-serif">Revisa tu cita</h3>
                   <div className="bg-gray-50 p-6 rounded-lg shadow-inner border space-y-4">
                     <div>
                       <div className="flex justify-between items-center">
-                        <h4 className="font-bold text-gray-800">Servicios</h4>
+                        <h4 className="font-bold text-gray-800 font-serif">Servicios</h4>
                         <button onClick={handleBackAndClear} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       <ul className="list-disc list-inside mt-2 text-sm text-gray-600">
@@ -484,7 +484,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                     <div className="border-t border-gray-200"></div>
                      <div>
                       <div className="flex justify-between items-center">
-                        <h4 className="font-bold text-gray-800">Preferencias</h4>
+                        <h4 className="font-bold text-gray-800 font-serif">Preferencias</h4>
                         <button onClick={() => goToStep(0)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       {customizableServices.map(s => (
@@ -496,7 +496,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                     <div className="border-t border-gray-200"></div>
                     <div>
                       <div className="flex justify-between items-center">
-                        <h4 className="font-bold text-gray-800">Profesional</h4>
+                        <h4 className="font-bold text-gray-800 font-serif">Profesional</h4>
                         <button onClick={() => goToStep(1)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       <p className="mt-1 text-gray-600">{selectedProfessional?.name}</p>
@@ -504,7 +504,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                     <div className="border-t border-gray-200"></div>
                     <div>
                       <div className="flex justify-between items-center">
-                        <h4 className="font-bold text-gray-800">Fecha y Hora</h4>
+                        <h4 className="font-bold text-gray-800 font-serif">Fecha y Hora</h4>
                         <button onClick={() => goToStep(2)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       <p className="mt-1 text-gray-600">{selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })} a las {selectedTime}</p>
@@ -512,7 +512,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                     <div className="border-t border-gray-200"></div>
                     <div>
                       <div className="flex justify-between items-center">
-                        <h4 className="font-bold text-gray-800">Tus Datos</h4>
+                        <h4 className="font-bold text-gray-800 font-serif">Tus Datos</h4>
                         <button onClick={() => goToStep(3)} className="text-sm text-pitaya-pink hover:underline focus:outline-none">Editar</button>
                       </div>
                       <p className="mt-1 text-gray-600">{clientDetails.name}</p>
@@ -532,7 +532,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
             case 5: // Payment
               return (
                 <div className="fade-in max-w-lg mx-auto text-center">
-                    <h3 className="text-2xl font-semibold mb-4">Resumen y Pago</h3>
+                    <h3 className="text-2xl font-semibold mb-4 font-serif">Resumen y Pago</h3>
                     <div className="bg-gray-50 p-6 rounded-lg shadow-inner border mb-6 text-left space-y-3">
                         <div>
                             <strong className="text-gray-700">Servicios:</strong>
@@ -558,7 +558,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
               return (
                   <div className="text-center p-8 bg-green-50 rounded-lg border border-green-200 fade-in">
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      <h3 className="text-2xl font-semibold text-green-800">¡Cita Confirmada!</h3>
+                      <h3 className="text-2xl font-semibold text-green-800 font-serif">¡Cita Confirmada!</h3>
                       <p className="text-green-700 mt-2 mb-6">Gracias, {clientDetails.name}. Recibirás un correo electrónico con todos los detalles.</p>
                       <div className="bg-white p-4 rounded-lg border text-left text-sm space-y-2 mb-6">
                         <p><strong>Servicios:</strong> {services.map(s => s.name).join(', ')}</p>
@@ -596,7 +596,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                     </button>
                     <div>
-                      <h2 className="text-2xl md:text-3xl font-bold text-pitaya-dark">{services.length > 1 ? `${services.length} Servicios Seleccionados` : services[0]?.name}</h2>
+                      <h2 className="text-2xl md:text-3xl font-bold text-pitaya-dark font-serif">{services.length > 1 ? `${services.length} Servicios Seleccionados` : services[0]?.name}</h2>
                       <p className="text-gray-500">{totalDuration} min • ${totalPrice} MXN</p>
                     </div>
                 </div>

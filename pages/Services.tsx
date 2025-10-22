@@ -75,7 +75,7 @@ const Services: React.FC = () => {
                 ) : (
                     <>
                         <div className="text-center mb-12">
-                            <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark">Nuestros Servicios</h1>
+                            <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark font-serif">Nuestros Servicios</h1>
                             <p className="text-lg text-pitaya-dark/70 mt-2">Elige tu tratamiento y reserva tu momento de belleza.</p>
                         </div>
                         
@@ -115,7 +115,7 @@ const Services: React.FC = () => {
                                         )}
                                         <img src={service.imageUrl} alt={service.name} className="w-full h-48 object-cover" />
                                         <div className="p-6 flex flex-col flex-grow">
-                                            <h3 className="text-xl font-semibold text-pitaya-dark mb-2">{service.name}</h3>
+                                            <h3 className="text-xl font-semibold text-pitaya-dark mb-2 font-serif">{service.name}</h3>
                                             <p className="text-pitaya-dark/70 mb-4 text-sm flex-grow">{service.description}</p>
                                             <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
                                                 <span>{service.duration} min</span>
@@ -123,7 +123,7 @@ const Services: React.FC = () => {
                                             </div>
                                             <button
                                                 onClick={() => handleToggleServiceSelection(service)}
-                                                className={`block w-full text-center text-white font-semibold py-3 rounded-full transition duration-300 ${isSelected ? 'bg-gray-500 hover:bg-gray-600' : 'bg-pitaya-pink hover:bg-opacity-90 transform group-hover:scale-105'}`}
+                                                className={`block w-full text-center text-white font-semibold py-3 rounded-full transition-all duration-300 ${isSelected ? 'bg-gray-500 hover:bg-gray-600' : 'bg-gradient-to-r from-pitaya-pink to-fuchsia-500 shadow-md hover:shadow-lg hover:brightness-110 transform group-hover:scale-105'}`}
                                             >
                                                 {isSelected ? 'Quitar selección' : 'Seleccionar'}
                                             </button>

@@ -10,8 +10,8 @@ const About: React.FC = () => {
                         <img src="https://picsum.photos/seed/salon-interior/800/600" alt="Interior de Pitaya Nails" className="rounded-lg shadow-2xl" />
                     </div>
                     <div className="text-center lg:text-left">
-                        <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark">Nuestra Historia</h1>
-                        <p className="text-pitaya-gold text-xl font-semibold mt-2 mb-6">Pasión por la perfección</p>
+                        <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark font-serif">Nuestra Historia</h1>
+                        <p className="text-pitaya-gold text-xl font-semibold mt-2 mb-6 font-serif">Pasión por la perfección</p>
                         <div className="space-y-4 text-lg text-pitaya-dark/80">
                             <p>
                                 Pitaya Nails nació del sueño de crear un espacio único en Cancún, donde la belleza de las uñas se eleva a la categoría de arte. Fundado por Lily, una apasionada del diseño y la perfección, nuestro salón es un refugio para quienes buscan calidad, creatividad y un servicio excepcional.

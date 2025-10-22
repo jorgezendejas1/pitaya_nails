@@ -24,7 +24,7 @@ const Header: React.FC = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const linkClasses = "text-pitaya-dark hover:text-pitaya-pink transition duration-300 py-2 text-sm font-semibold tracking-wider uppercase";
+    const linkClasses = "text-pitaya-dark hover:text-pitaya-pink transition duration-300 py-2 text-sm font-medium tracking-wide uppercase";
     const activeLinkClasses = "text-pitaya-pink";
 
     return (

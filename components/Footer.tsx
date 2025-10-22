@@ -8,12 +8,12 @@ const Footer: React.FC = () => {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
                     <div>
-                        <h3 className="text-2xl font-bold text-pitaya-pink mb-4">Pitaya Nails</h3>
+                        <h3 className="text-2xl font-bold text-pitaya-pink mb-4 font-serif">Pitaya Nails</h3>
                         <p className="text-pitaya-dark/70">Arte en uñas con el toque de Cancún.</p>
                          <p className="mt-4 text-sm text-pitaya-dark/70">Lun - Sáb: 10:00 - 20:00</p>
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold mb-4 uppercase tracking-wider">Navegación</h3>
+                        <h3 className="text-lg font-semibold mb-4 uppercase tracking-wider font-serif">Navegación</h3>
                         <ul className="space-y-2">
                             <li><Link to="/servicios" className="hover:text-pitaya-pink transition-colors duration-300">Servicios</Link></li>
                             <li><Link to="/portafolio" className="hover:text-pitaya-pink transition-colors duration-300">Portafolio</Link></li>
@@ -22,7 +22,7 @@ const Footer: React.FC = () => {
                         </ul>
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold mb-4 uppercase tracking-wider">Síguenos</h3>
+                        <h3 className="text-lg font-semibold mb-4 uppercase tracking-wider font-serif">Síguenos</h3>
                         <div className="flex justify-center md:justify-start space-x-4">
                             <a href={INSTAGRAM_LINK} target="_blank" rel="noopener noreferrer" className="text-pitaya-dark/80 hover:text-pitaya-pink transition-colors duration-300" aria-label="Instagram">
                                 <InstagramIcon className="w-6 h-6" />

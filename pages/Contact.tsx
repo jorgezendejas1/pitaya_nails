@@ -35,12 +35,12 @@ const Contact: React.FC = () => {
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
             <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark">Contáctanos</h1>
+                <h1 className="text-4xl md:text-5xl font-bold text-pitaya-dark font-serif">Contáctanos</h1>
                 <p className="text-lg text-pitaya-dark/70 mt-2">¿Tienes alguna pregunta? Estamos aquí para ayudarte.</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
                 <div className="bg-white p-8 rounded-lg shadow-lg">
-                    <h2 className="text-2xl font-bold mb-6 text-pitaya-dark">Envíanos un mensaje</h2>
+                    <h2 className="text-2xl font-bold mb-6 text-pitaya-dark font-serif">Envíanos un mensaje</h2>
                     
                     {submissionStatus === 'success' ? (
                          <div className="text-center p-4 bg-green-50 text-green-800 rounded-lg border border-green-200">
@@ -85,7 +85,7 @@ const Contact: React.FC = () => {
                 </div>
                 <div className="space-y-8">
                      <div>
-                        <h2 className="text-2xl font-bold mb-4 text-pitaya-dark">Información Directa</h2>
+                        <h2 className="text-2xl font-bold mb-4 text-pitaya-dark font-serif">Información Directa</h2>
                         <div className="space-y-4">
                              <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="flex items-center text-lg text-pitaya-dark/90 hover:text-pitaya-pink transition">
                                 <WhatsAppIcon className="w-6 h-6 mr-3 text-pitaya-pink" />
@@ -98,7 +98,7 @@ const Contact: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <h2 className="text-2xl font-bold mb-4 text-pitaya-dark">Nuestra Ubicación</h2>
+                        <h2 className="text-2xl font-bold mb-4 text-pitaya-dark font-serif">Nuestra Ubicación</h2>
                         <div className="h-96 rounded-lg overflow-hidden shadow-lg">
                            <InteractiveMap lat={21.1619} lng={-86.8515} zoom={13} />
                         </div>
