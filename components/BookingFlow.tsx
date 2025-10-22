@@ -5,6 +5,7 @@ import { TEAM } from '../constants';
 interface BookingFlowProps {
     services: Service[];
     onBack: () => void;
+    initialCustomizations?: Record<string, { quantity: number; notes: string }>;
 }
 
 const BOOKING_STATE_KEY = 'pitayaNailsBookingState';
@@ -41,13 +42,26 @@ const formatTime = (minutes: number): string => {
 };
 // --- End of constants and helpers ---
 
-const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
+const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCustomizations: initialCustomizationsFromProps }) => {
     const savedState = useMemo(() => loadBookingState(), []);
 
     const customizableServices = useMemo(() => services.filter(s => s.isCustomizable), [services]);
-    const initialCustomizations = useMemo(() => Object.fromEntries(
-        customizableServices.map(s => [s.id, { quantity: 1, notes: '' }])
-    ), [customizableServices]);
+    
+    const initialCustomizations = useMemo(() => {
+        const base = Object.fromEntries(
+            customizableServices.map(s => [s.id, { quantity: 1, notes: '' }])
+        );
+        // Merge with quantities passed from props
+        if (initialCustomizationsFromProps) {
+            for (const key in initialCustomizationsFromProps) {
+                if (base[key]) {
+                    base[key].quantity = initialCustomizationsFromProps[key].quantity;
+                }
+            }
+        }
+        return base;
+    }, [customizableServices, initialCustomizationsFromProps]);
+
 
     const [currentStep, setCurrentStep] = useState(savedState?.currentStep ?? 0);
     const [selectedProfessional, setSelectedProfessional] = useState<TeamMember | null>(savedState?.selectedProfessional ?? null);
@@ -357,47 +371,47 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                 );
             case 2: // Select Date and Time
                 return (
-                     <div className="fade-in">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
-                            <div className="w-full">
-                                <h3 className="text-xl font-semibold mb-4 text-center font-serif">1. Elige una fecha</h3>
-                                <div className="max-w-xs mx-auto bg-white p-4 rounded-lg border">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pitaya-pink">&lt;</button>
-                                        <h4 id="month-year-heading" className="font-semibold text-lg capitalize font-serif">{monthName} {year}</h4>
-                                        <button onClick={() => changeMonth(1)} aria-label="Mes siguiente" className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pitaya-pink">&gt;</button>
+                     <div className="fade-in max-w-lg mx-auto w-full">
+                        <div className="w-full">
+                            <h3 className="text-xl font-semibold mb-4 text-center font-serif">1. Elige una fecha</h3>
+                            <div className="max-w-xs mx-auto bg-white p-4 rounded-lg border">
+                                <div className="flex justify-between items-center mb-4">
+                                    <button onClick={() => changeMonth(-1)} aria-label="Mes anterior" className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pitaya-pink">&lt;</button>
+                                    <h4 id="month-year-heading" className="font-semibold text-lg capitalize font-serif">{monthName} {year}</h4>
+                                    <button onClick={() => changeMonth(1)} aria-label="Mes siguiente" className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-pitaya-pink">&gt;</button>
+                                </div>
+                                <div role="grid" aria-labelledby="month-year-heading">
+                                    <div role="row" className="grid grid-cols-7 text-center text-sm text-gray-500 mb-2">
+                                        {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((day, i) => <div key={i} role="columnheader">{day}</div>)}
                                     </div>
-                                    <div role="grid" aria-labelledby="month-year-heading">
-                                        <div role="row" className="grid grid-cols-7 text-center text-sm text-gray-500 mb-2">
-                                            {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((day, i) => <div key={i} role="columnheader">{day}</div>)}
+                                    {calendarWeeks.map((week, weekIndex) => (
+                                        <div key={weekIndex} role="row" className="grid grid-cols-7 text-center">
+                                            {week.map((date, dayIndex) => {
+                                                if (!date) return <div key={dayIndex} className="w-8 h-8 p-1"></div>;
+                                                const isUnavailable = isDateUnavailable(date);
+                                                return (
+                                                    <div key={dayIndex} role="gridcell" className="p-1 flex items-center justify-center">
+                                                        <button 
+                                                            onClick={() => handleSelectDate(date.getDate())}
+                                                            disabled={isUnavailable}
+                                                            aria-disabled={isUnavailable}
+                                                            aria-selected={selectedDate?.getTime() === date.getTime()}
+                                                            aria-label={date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                                            className={`w-8 h-8 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pitaya-pink ${isUnavailable ? 'text-gray-300 cursor-not-allowed line-through' : 'hover:bg-pitaya-pink/20'} ${selectedDate?.getTime() === date.getTime() ? 'bg-pitaya-pink text-white' : 'text-gray-800'}`}
+                                                        >
+                                                            {date.getDate()}
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
-                                        {calendarWeeks.map((week, weekIndex) => (
-                                            <div key={weekIndex} role="row" className="grid grid-cols-7 text-center">
-                                                {week.map((date, dayIndex) => {
-                                                    if (!date) return <div key={dayIndex} className="w-8 h-8 p-1"></div>;
-                                                    const isUnavailable = isDateUnavailable(date);
-                                                    return (
-                                                        <div key={dayIndex} role="gridcell" className="p-1 flex items-center justify-center">
-                                                            <button 
-                                                                onClick={() => handleSelectDate(date.getDate())}
-                                                                disabled={isUnavailable}
-                                                                aria-disabled={isUnavailable}
-                                                                aria-selected={selectedDate?.getTime() === date.getTime()}
-                                                                aria-label={date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                                                className={`w-8 h-8 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pitaya-pink ${isUnavailable ? 'text-gray-300 cursor-not-allowed line-through' : 'hover:bg-pitaya-pink/20'} ${selectedDate?.getTime() === date.getTime() ? 'bg-pitaya-pink text-white' : 'text-gray-800'}`}
-                                                            >
-                                                                {date.getDate()}
-                                                            </button>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        ))}
-                                    </div>
+                                    ))}
                                 </div>
                             </div>
-                            <div className="w-full">
-                                <h3 className="text-xl font-semibold mb-4 text-center font-serif">2. Elige un horario</h3>
+                        </div>
+                        <div className="w-full mt-8">
+                            <h3 className="text-xl font-semibold mb-4 text-center font-serif">2. Elige un horario</h3>
+                            <div className="bg-gray-50 p-4 rounded-lg border">
                                 {selectedDate ? (
                                     <div className="fade-in max-h-80 overflow-y-auto pr-2">
                                         <h4 className="text-md font-semibold text-center mb-4 font-serif">Disponibles para {selectedDate.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric' })}</h4>
@@ -407,7 +421,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                                                     <button 
                                                         key={time} 
                                                         onClick={() => handleSelectTime(time)} 
-                                                        className="p-3 border rounded-lg hover:bg-pitaya-pink hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-pitaya-pink"
+                                                        className="p-3 border border-gray-300 rounded-lg bg-white text-pitaya-dark font-semibold hover:bg-pitaya-pink hover:text-white hover:border-pitaya-pink transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-pitaya-pink"
                                                         aria-label={`Reservar a las ${time}`}
                                                     >
                                                         {time}
@@ -415,11 +429,14 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <p className="text-center text-gray-500 p-4 border-2 border-dashed rounded-lg">No hay horarios disponibles para este día con la duración requerida. Por favor, selecciona otra fecha.</p>
+                                            <div className="text-center text-pitaya-dark/70 p-6 bg-white rounded-lg border border-dashed">
+                                                <p>No hay horarios disponibles para este día. Por favor, selecciona otra fecha.</p>
+                                            </div>
                                         )}
                                     </div>
                                 ) : (
-                                     <div className="text-center text-gray-500 p-8 border-2 border-dashed rounded-lg">
+                                    <div className="text-center text-pitaya-dark/70 p-6 bg-white rounded-lg border border-dashed flex flex-col items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-pitaya-pink/50 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                         <p>Por favor, selecciona una fecha en el calendario para ver los horarios.</p>
                                     </div>
                                 )}
@@ -593,7 +610,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
             {currentStep < 6 && (
                 <div className="flex items-center mb-8">
                     <button onClick={goBackStep} className="text-gray-600 hover:text-pitaya-pink transition mr-4 p-2 rounded-full hover:bg-gray-100" aria-label="Volver al paso anterior">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
                     </button>
                     <div>
                       <h2 className="text-2xl md:text-3xl font-bold text-pitaya-dark font-serif">{services.length > 1 ? `${services.length} Servicios Seleccionados` : services[0]?.name}</h2>
@@ -603,18 +620,23 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack }) => {
             )}
 
             {currentStep < 6 && (
-                <div className="mb-8 px-4">
-                    <div className="flex items-center">
+                 <div className="mb-8 px-4 relative">
+                    {/* Background line */}
+                    <div className="absolute top-4 left-4 right-4 h-1 bg-gray-200" aria-hidden="true"></div>
+                    {/* Active progress line */}
+                    <div 
+                        className="absolute top-4 left-4 h-1 bg-pitaya-pink transition-all duration-500"
+                        style={{ width: `calc(${(currentStep / (steps.length - 2)) * 100}% - 2rem)` }}
+                    ></div>
+
+                    <div className="flex items-start justify-between relative">
                         {steps.slice(0, -1).map((step, index) => (
-                            <React.Fragment key={index}>
-                                <div className="flex flex-col items-center w-20">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${index <= currentStep ? 'bg-pitaya-pink text-white' : 'bg-gray-200 text-gray-500'}`}>
-                                       {index < currentStep ? '✓' : index + 1}
-                                    </div>
-                                    <p className={`mt-2 text-xs text-center transition-colors duration-300 ${index <= currentStep ? 'text-pitaya-pink font-semibold' : 'text-gray-500'}`}>{step}</p>
+                            <div key={index} className="flex flex-col items-center text-center w-16 z-10">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${index <= currentStep ? 'bg-pitaya-pink text-white' : 'bg-white text-gray-500 border-2 border-gray-300'}`}>
+                                   {index < currentStep ? '✓' : index + 1}
                                 </div>
-                                {index < steps.length - 2 && <div className={`flex-grow h-1 mx-2 transition-colors duration-500 ${index < currentStep ? 'bg-pitaya-pink' : 'bg-gray-200'}`}></div>}
-                            </React.Fragment>
+                                <p className={`mt-2 text-xs transition-colors duration-300 ${index <= currentStep ? 'text-pitaya-pink font-semibold' : 'text-gray-500'}`}>{step}</p>
+                            </div>
                         ))}
                     </div>
                 </div>
