@@ -4,8 +4,8 @@ import type { Service, TeamMember, Testimonial, PortfolioImage, BeforeAfterImage
 export const WHATSAPP_LINK = "https://wa.me/529841123411?text=Hola,+quiero+agendar+una+cita+en+Pitaya+Nails.";
 export const INSTAGRAM_LINK = "https://www.instagram.com/nailstation_cun";
 export const SALON_EMAIL_ADDRESS = "info@pitayanails.com"; // Email for receiving booking notifications
-// FIX: Add missing FORMSPREE_ENDPOINT export for the contact form.
-export const FORMSPREE_ENDPOINT = "https://formspree.io/f/mqkrvylp";
+// ATTENTION: Replace YOUR_FORM_ID with your actual Formspree form ID to enable the contact form.
+export const FORMSPREE_ENDPOINT = "https://formspree.io/f/YOUR_FORM_ID";
 
 export const SERVICES: Service[] = [
   { id: 'mani-classic', name: 'Manicura Clásica', description: 'Cuidado completo de uñas y cutículas con esmaltado tradicional.', duration: 45, price: 350, category: 'Manicura', imageUrl: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/mani-classic.png' },
@@ -107,7 +107,6 @@ export const BEFORE_AFTER_IMAGES: BeforeAfterImage[] = [
 
 
 export const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    // FIX: Corrected typo in viewBox attribute (extra `24"`). This caused a cascade of parsing errors.
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
         <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
         <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>

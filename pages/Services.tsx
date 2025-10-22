@@ -59,7 +59,6 @@ const Services: React.FC = () => {
     const [activePriceRange, setActivePriceRange] = useState('Todos');
     const [activeDurationRange, setActiveDurationRange] = useState('Todos');
     const [isViewingAvailability, setIsViewingAvailability] = useState(false);
-    const isResendConfigured = !!process.env.RESEND_API_KEY;
 
     const serviceCategories = useMemo(() => ['Todos', ...Array.from(new Set(SERVICES.map(s => s.category)))], []);
 
@@ -380,10 +379,10 @@ const Services: React.FC = () => {
 
                         {selectedServices.length > 0 && (
                             <div className="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 fade-in-up" role="status">
-                                <div className="container mx-auto flex justify-between items-center gap-4">
-                                    <div className="flex-grow">
+                                <div className="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+                                    <div className="flex-grow text-center sm:text-left">
                                         <p className="font-bold text-pitaya-dark">{selectedServices.length} {selectedServices.length === 1 ? 'servicio seleccionado' : 'servicios seleccionados'}</p>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center justify-center sm:justify-start gap-4">
                                             <p className="text-sm text-gray-600">Total: ${totals.price} MXN ({totals.duration} min)</p>
                                             <button 
                                                 onClick={() => setIsViewingAvailability(true)} 
@@ -393,18 +392,14 @@ const Services: React.FC = () => {
                                             </button>
                                         </div>
                                     </div>
-                                    {isResendConfigured ? (
-                                        <button onClick={handleStartBooking} className="bg-pitaya-pink text-white font-semibold px-6 py-3 rounded-full hover:bg-opacity-90 transition transform hover:scale-105 whitespace-nowrap">
+                                    <div className="flex-shrink-0 text-center sm:text-right">
+                                        <button 
+                                            onClick={handleStartBooking} 
+                                            className="bg-pitaya-pink text-white font-semibold px-6 py-3 w-full sm:w-auto rounded-full hover:bg-opacity-90 transition transform hover:scale-105 whitespace-nowrap"
+                                        >
                                             Reservar Cita
                                         </button>
-                                    ) : (
-                                        <div className="text-right">
-                                            <button disabled className="bg-gray-400 text-white font-semibold px-6 py-3 rounded-full cursor-not-allowed whitespace-nowrap">
-                                                Reservar Cita
-                                            </button>
-                                            <p className="text-xs text-yellow-800 mt-1">Reservas online no disponibles.</p>
-                                        </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
                         )}

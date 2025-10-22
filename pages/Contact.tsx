@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// FIX: Import the missing FORMSPREE_ENDPOINT constant.
 import { WHATSAPP_LINK, INSTAGRAM_LINK, FORMSPREE_ENDPOINT, InstagramIcon, WhatsAppIcon } from '../constants';
 import InteractiveMap from '../components/InteractiveMap';
 
@@ -86,11 +85,6 @@ const Contact: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            {FORMSPREE_ENDPOINT.includes('YOUR_FORM_ID') && (
-                               <p className="text-sm text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
-                                   <strong>Atención:</strong> Para activar este formulario, necesitas reemplazar <code>YOUR_FORM_ID</code> en el archivo <code>constants.tsx</code> con tu ID de Formspree.
-                               </p>
-                            )}
                             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                                 <div>
                                     <label htmlFor="name" className="block text-sm font-semibold text-gray-700">Nombre</label>

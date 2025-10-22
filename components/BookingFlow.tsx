@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Service, TeamMember, BookingHistoryItem } from '../types';
 import { 
@@ -340,9 +339,9 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
     const handleConfirmAndSubmit = async () => {
         setSubmissionError(null);
         setIsProcessing(true);
-
+    
         const resendApiKey = process.env.RESEND_API_KEY;
-
+    
         const dateString = selectedDate?.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) || 'No especificada';
         const servicesListHtml = services.map(s => {
             if (customizations[s.id]) {
@@ -350,7 +349,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
             }
             return `<li>${s.name}</li>`;
         }).join('');
-
+    
         // Email to Salon Owner
         const salonEmailHtml = `
             <div style="font-family: Arial, sans-serif; line-height: 1.6;">
@@ -395,7 +394,7 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
                 <p><em>El equipo de Pitaya Nails</em></p>
             </div>
         `;
-
+    
         const sendEmail = (payload: object) => {
             return fetch('https://api.resend.com/emails', {
                 method: 'POST',
@@ -406,27 +405,27 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
                 body: JSON.stringify(payload),
             });
         };
-
+    
         try {
             const salonEmailPayload = {
-                from: 'Reservas <onboarding@resend.dev>', // Should be a verified domain in production
+                from: 'Reservas <onboarding@resend.dev>',
                 to: [SALON_EMAIL_ADDRESS],
                 subject: `Nueva Solicitud de Cita: ${clientDetails.name}`,
                 html: salonEmailHtml,
             };
             
             const clientEmailPayload = {
-                from: 'Pitaya Nails <onboarding@resend.dev>', // Should be a verified domain in production
+                from: 'Pitaya Nails <onboarding@resend.dev>',
                 to: [clientDetails.email],
                 subject: 'Tu solicitud de cita en Pitaya Nails',
                 html: clientEmailHtml,
             };
-
+    
             const [salonResponse, clientResponse] = await Promise.all([
                 sendEmail(salonEmailPayload),
                 sendEmail(clientEmailPayload)
             ]);
-
+    
             if (salonResponse.ok && clientResponse.ok) {
                 handleNextStep(); // Go to confirmation page
             } else {
@@ -471,8 +470,6 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
         today.setHours(0, 0, 0, 0);
         return date < today || (selectedProfessional?.unavailableDays.includes(date.getDay()) ?? false);
     }
-    
-    const isResendConfigured = !!process.env.RESEND_API_KEY;
 
     const renderStepContent = () => {
         switch (currentStep) {
@@ -794,16 +791,10 @@ const BookingFlow: React.FC<BookingFlowProps> = ({ services, onBack, initialCust
                         </div>
 
                     </div>
-                     {!isResendConfigured ? (
-                       <p className="text-sm text-yellow-800 bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
-                           <strong>Atención:</strong> La reserva de citas está desactivada. El dueño del sitio necesita configurar la clave de API de Resend.
-                       </p>
-                     ) : (
-                        submissionError && <p className="text-red-600 text-sm mb-4">{submissionError}</p>
-                     )}
+                    {submissionError && <p className="text-red-600 text-sm mb-4">{submissionError}</p>}
                     <button 
                         onClick={handleConfirmAndSubmit} 
-                        disabled={isProcessing || !isResendConfigured} 
+                        disabled={isProcessing} 
                         className="mt-6 w-full inline-flex items-center justify-center bg-pitaya-pink text-white font-semibold py-3 px-10 rounded-full hover:bg-opacity-90 transition transform hover:scale-105 disabled:bg-opacity-50 disabled:cursor-not-allowed"
                     >
                         {isProcessing ? (
