@@ -41,3 +41,11 @@ export interface BookingHistoryItem {
   totalPrice: number;
   totalDuration: number;
 }
+
+export interface BeforeAfterImage {
+  id: number;
+  title: string;
+  description: string;
+  beforeSrc: string;
+  afterSrc: string;
+}

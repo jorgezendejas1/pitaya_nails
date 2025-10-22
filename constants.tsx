@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Service, TeamMember, Testimonial, PortfolioImage } from './types';
+import type { Service, TeamMember, Testimonial, PortfolioImage, BeforeAfterImage } from './types';
 
 export const WHATSAPP_LINK = "https://wa.me/529841123411?text=Hola,+quiero+agendar+una+cita+en+Pitaya+Nails.";
 export const INSTAGRAM_LINK = "https://www.instagram.com/nailstation_cun";
@@ -41,25 +41,70 @@ export const TESTIMONIALS: Testimonial[] = [
 
 export const PORTFOLIO_CATEGORIES = ['Todos', 'Manicura', 'Pedicura', 'Uñas Esculturales', 'Nail Art'];
 
+const additionalPortfolioImages: PortfolioImage[] = [
+    { id: 4, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-1.png', alt: 'Uñas esculturales con efecto mármol y dorado', category: 'Uñas Esculturales' },
+    { id: 5, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-2.png', alt: 'Manicura francesa clásica con un toque moderno', category: 'Manicura' },
+    { id: 6, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-3.png', alt: 'Nail art floral pintado a mano sobre base nude', category: 'Nail Art' },
+    { id: 7, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-4.png', alt: 'Pedicura spa con esmalte rojo vibrante', category: 'Pedicura' },
+    { id: 8, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-5.png', alt: 'Uñas acrílicas largas en tono baby boomer', category: 'Uñas Esculturales' },
+    { id: 9, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-6.png', alt: 'Diseño de uñas con efecto cromo y detalles negros', category: 'Nail Art' },
+    { id: 10, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-7.png', alt: 'Manicura con esmalte en gel color borgoña profundo', category: 'Manicura' },
+    { id: 11, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-8.png', alt: 'Uñas de polygel con encapsulado de glitter', category: 'Uñas Esculturales' },
+    { id: 12, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-9.png', alt: 'Nail art abstracto con líneas y puntos de colores', category: 'Nail Art' },
+    { id: 13, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-10.png', alt: 'Pedicura con diseño de margaritas', category: 'Pedicura' },
+    { id: 14, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-11.png', alt: 'Uñas stiletto con esmalte negro mate', category: 'Uñas Esculturales' },
+    { id: 15, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/portfolio-12.png', alt: 'Manicura con media luna en tonos metálicos', category: 'Manicura' },
+];
+
 export const PORTFOLIO_IMAGES: PortfolioImage[] = [
     { id: 0, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/nail-design-1.png', alt: 'Diseño de uñas francés con detalles dorados', category: 'Manicura' },
     { id: 1, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/nail-design-2.png', alt: 'Diseño de uñas ombré lila y blanco con pedrería', category: 'Uñas Esculturales' },
     { id: 2, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/nail-design-3.png', alt: 'Diseño de uñas rosa pálido largas y elegantes', category: 'Manicura' },
     { id: 3, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/nail-design-4.png', alt: 'Diseño de uñas holográfico con líneas de colores', category: 'Nail Art' },
-    ...Array.from({ length: 96 }, (_, i) => ({
-        id: i + 4,
-        src: `https://picsum.photos/seed/nail-design-${i}/600/800`,
-        alt: `Diseño de uñas ${i + 5}`,
-        category: PORTFOLIO_CATEGORIES[((i+4) % 4) + 1],
-    }))
+    ...additionalPortfolioImages
 ];
 
 
-export const DIPLOMAS_IMAGES = Array.from({ length: 6 }, (_, i) => ({
-  id: i,
-  src: `https://picsum.photos/seed/diploma-${i}/600/400`,
-  alt: `Certificación ${i + 1}`
-}));
+export const DIPLOMAS_IMAGES = [
+    { id: 0, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/diploma-1.png', alt: 'Certificación en Manicura Rusa' },
+    { id: 1, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/diploma-2.png', alt: 'Certificación en Uñas Acrílicas' },
+    { id: 2, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/diploma-3.png', alt: 'Certificación en Nail Art Avanzado' },
+    { id: 3, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/diploma-4.png', alt: 'Certificación en Bioseguridad e Higiene' },
+    { id: 4, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/diploma-5.png', alt: 'Masterclass de Técnicas de Salón' },
+    { id: 5, src: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/diploma-6.png', alt: 'Certificación en Pedicura Profesional' },
+];
+
+export const BEFORE_AFTER_IMAGES: BeforeAfterImage[] = [
+    {
+        id: 1,
+        title: 'Restauración de Uñas Mordidas',
+        description: 'Con la aplicación de uñas acrílicas esculturales, logramos reconstruir y dar una apariencia saludable y estética a las uñas, promoviendo su crecimiento natural por debajo.',
+        beforeSrc: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/before-1.png',
+        afterSrc: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/after-1.png',
+    },
+    {
+        id: 2,
+        title: 'Manicura Rusa Profunda',
+        description: 'La técnica de manicura rusa nos permite una limpieza impecable de la cutícula, logrando que el esmaltado en gel luzca perfecto desde la raíz y dure por más tiempo.',
+        beforeSrc: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/before-2.png',
+        afterSrc: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/after-2.png',
+    },
+    {
+        id: 3,
+        title: 'De Uñas Cortas a Largas y Elegantes',
+        description: 'Utilizando extensiones con Soft Gel, transformamos unas uñas cortas en una manicura larga, resistente y de aspecto muy natural, listas para cualquier evento.',
+        beforeSrc: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/before-3.png',
+        afterSrc: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/after-3.png',
+    },
+     {
+        id: 4,
+        title: 'Pedicura Spa Revitalizante',
+        description: 'Más allá del esmaltado, nuestro Pedicura Spa trata callosidades y resequedad, devolviendo a los pies un aspecto suave, hidratado y completamente renovado.',
+        beforeSrc: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/before-4.png',
+        afterSrc: 'https://storage.googleapis.com/aistudio-hosting/gallery-assets/pitaya-nails/generated/after-4.png',
+    }
+];
+
 
 export const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
     // FIX: Corrected typo in viewBox attribute (extra `24"`). This caused a cascade of parsing errors.
@@ -91,7 +136,7 @@ export const PhoneIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export const MailIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25-2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
     </svg>
 );
 

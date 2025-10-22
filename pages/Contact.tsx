@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 // FIX: Import the missing FORMSPREE_ENDPOINT constant.
 import { WHATSAPP_LINK, INSTAGRAM_LINK, FORMSPREE_ENDPOINT, InstagramIcon, WhatsAppIcon } from '../constants';
@@ -172,7 +171,7 @@ const Contact: React.FC = () => {
                     <div>
                         <h2 className="text-2xl font-bold mb-4 text-pitaya-dark font-serif">Nuestra Ubicación</h2>
                         <div className="h-96 rounded-lg overflow-hidden shadow-lg">
-                           <InteractiveMap lat={21.1115} lng={-86.8430} zoom={15} />
+                           <InteractiveMap lat={21.1067629} lng={-86.8854156} zoom={15} />
                         </div>
                     </div>
                 </div>

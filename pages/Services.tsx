@@ -8,7 +8,7 @@ import BookingHistory from '../components/BookingHistory';
 
 // Icon for Grid View
 const GridIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
         <rect x="3" y="3" width="7" height="7"></rect>
         <rect x="14" y="3" width="7" height="7"></rect>
         <rect x="14" y="14" width="7" height="7"></rect>
@@ -18,7 +18,7 @@ const GridIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 // Icon for List View
 const ListIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
         <line x1="8" y1="6" x2="21" y2="6"></line>
         <line x1="8" y1="12" x2="21" y2="12"></line>
         <line x1="8" y1="18" x2="21" y2="18"></line>
@@ -59,6 +59,7 @@ const Services: React.FC = () => {
     const [activePriceRange, setActivePriceRange] = useState('Todos');
     const [activeDurationRange, setActiveDurationRange] = useState('Todos');
     const [isViewingAvailability, setIsViewingAvailability] = useState(false);
+    const isResendConfigured = !!process.env.RESEND_API_KEY;
 
     const serviceCategories = useMemo(() => ['Todos', ...Array.from(new Set(SERVICES.map(s => s.category)))], []);
 
@@ -392,9 +393,18 @@ const Services: React.FC = () => {
                                             </button>
                                         </div>
                                     </div>
-                                    <button onClick={handleStartBooking} className="bg-pitaya-pink text-white font-semibold px-6 py-3 rounded-full hover:bg-opacity-90 transition transform hover:scale-105 whitespace-nowrap">
-                                        Reservar Cita
-                                    </button>
+                                    {isResendConfigured ? (
+                                        <button onClick={handleStartBooking} className="bg-pitaya-pink text-white font-semibold px-6 py-3 rounded-full hover:bg-opacity-90 transition transform hover:scale-105 whitespace-nowrap">
+                                            Reservar Cita
+                                        </button>
+                                    ) : (
+                                        <div className="text-right">
+                                            <button disabled className="bg-gray-400 text-white font-semibold px-6 py-3 rounded-full cursor-not-allowed whitespace-nowrap">
+                                                Reservar Cita
+                                            </button>
+                                            <p className="text-xs text-yellow-800 mt-1">Reservas online no disponibles.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

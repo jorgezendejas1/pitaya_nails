@@ -9,6 +9,7 @@ import Team from './pages/Team';
 import About from './pages/About';
 import Diplomas from './pages/Diplomas';
 import Contact from './pages/Contact';
+import BeforeAfter from './pages/BeforeAfter';
 
 const App: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const App: React.FC = () => {
           <Route index element={<Home />} />
           <Route path="servicios" element={<Services />} />
           <Route path="portafolio" element={<Portfolio />} />
+          <Route path="antes-y-despues" element={<BeforeAfter />} />
           <Route path="equipo" element={<Team />} />
           <Route path="nosotros" element={<About />} />
           <Route path="diplomas" element={<Diplomas />} />
